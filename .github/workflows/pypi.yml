@@ -29,3 +29,4 @@ jobs:
         user: __token__ # optional, default is __token__
         # Password for your PyPI user or an access token
         password: pypi-AgEIcHlwaS5vcmcCJGMwZDIzNmYyLTgyMmQtNGI0ZC1hYzI4LTFkM2Q5ZmU3NzNlMQACJXsicGVybWlzc2lvbnMiOiAidXNlciIsICJ2ZXJzaW9uIjogMX0AAAYgJq1dHjImSLYhKoE4HAZ3T77bLZwIsAnKCedvv7exqnc
+        repository_url: https://github.com/chenrz925/waterch-tasker.git
