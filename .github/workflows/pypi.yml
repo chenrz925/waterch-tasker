@@ -21,11 +21,17 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-      
-    - name: pypi-publish
-      uses: pypa/gh-action-pypi-publish@v1.1.0
-      with:
+    
+    # - name: pypi-publish
+      # uses: pypa/gh-action-pypi-publish@v1.1.0
+      # with:
         # PyPI user
-        user: __token__ # optional, default is __token__
+        # user: __token__ # optional, default is __token__
         # Password for your PyPI user or an access token
+        # password: pypi-AgEIcHlwaS5vcmcCJGMwZDIzNmYyLTgyMmQtNGI0ZC1hYzI4LTFkM2Q5ZmU3NzNlMQACJXsicGVybWlzc2lvbnMiOiAidXNlciIsICJ2ZXJzaW9uIjogMX0AAAYgJq1dHjImSLYhKoE4HAZ3T77bLZwIsAnKCedvv7exqnc
+        # repository_url: https://github.com/chenrz925/waterch-tasker.git
+    - name: PyPI Deployment
+      uses: casperdcl/deploy-pypi@v1
+      with:
+        # PyPI password or API token
         password: pypi-AgEIcHlwaS5vcmcCJGMwZDIzNmYyLTgyMmQtNGI0ZC1hYzI4LTFkM2Q5ZmU3NzNlMQACJXsicGVybWlzc2lvbnMiOiAidXNlciIsICJ2ZXJzaW9uIjogMX0AAAYgJq1dHjImSLYhKoE4HAZ3T77bLZwIsAnKCedvv7exqnc
