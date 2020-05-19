@@ -2,7 +2,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name="waterch-tasker",
-    version="0.0.1",
+    version="0.0.2",
     packages=find_namespace_packages(where="src"),
     package_dir={"": "src"},
     # Project uses reStructuredText, so ensure that the docutils get
@@ -19,6 +19,7 @@ setup(
     author_email="chenrz925@icloud.com",
     description="A scalable and extendable experiment task scheduler framework.",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     url="https://github.com/chenrz925/waterch-tasker",  # project home page, if any
     project_urls={
         "Documentation": "https://waterch-tasker.readthedocs.io/zh_CN/latest/",
