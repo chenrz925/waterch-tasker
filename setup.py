@@ -19,7 +19,6 @@ setup(
     author_email="chenrz925@icloud.com",
     description="A scalable and extendable experiment task scheduler framework.",
     long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
     url="https://github.com/chenrz925/waterch-tasker",  # project home page, if any
     project_urls={
         "Documentation": "https://waterch-tasker.readthedocs.io/zh_CN/latest/",
