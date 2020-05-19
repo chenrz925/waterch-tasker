@@ -35,3 +35,4 @@ jobs:
       with:
         # PyPI password or API token
         password: ${{secrets.PYPI_TOKEN}}
+        build: true
