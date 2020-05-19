@@ -1,5 +1,9 @@
+import pip
+pip.main(['install', '-r', 'requirements.txt'])
+
 from setuptools import setup, find_namespace_packages
 from datetime import datetime
+from pypandoc import convert_text
 
 raw_version = open('VERSION').read().strip(' \n')
 suffix = datetime.now().strftime('%Y%m%d%H%M')
