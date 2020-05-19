@@ -1,8 +1,8 @@
 from setuptools import setup, find_namespace_packages
-from os import popen
+from datetime import datetime
 
 raw_version = open('VERSION').read().strip(' \n')
-suffix = popen('git rev-parse --short HEAD').read().strip(' \n')
+suffix = datetime.now().strftime('%Y%m%d%H%M')
 
 setup(
     name="waterch-tasker",
