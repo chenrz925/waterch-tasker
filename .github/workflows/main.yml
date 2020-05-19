@@ -31,7 +31,7 @@ jobs:
         # password: ${{secrets.PYPI_TOKEN}}
         # repository_url: https://github.com/chenrz925/waterch-tasker.git
     - name: PyPI Deployment
-      uses: casperdcl/deploy-pypi@v1
+      uses: chenrz925/deploy-pypi@master
       with:
         # PyPI password or API token
         password: ${{secrets.PYPI_TOKEN}}
