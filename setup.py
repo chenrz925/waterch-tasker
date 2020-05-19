@@ -1,13 +1,15 @@
+from pip import main as pip_main
+
+pip_main(['install', '-r', 'requirements.txt'])
+
 from setuptools import setup, find_namespace_packages
-from os import popen
 from markdown import markdown
 
 raw_version = open('VERSION').read().strip(' \n')
-suffix = popen('git rev-parse --short HEAD').read().strip(' \n')
 
 setup(
     name="waterch-tasker",
-    version=f"{raw_version}-{suffix}",
+    version=raw_version,
     packages=find_namespace_packages(where="src"),
     package_dir={"": "src"},
     # Project uses reStructuredText, so ensure that the docutils get
