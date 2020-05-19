@@ -1,8 +1,9 @@
 from setuptools import setup, find_namespace_packages
-from uuid import uuid4
+from os import popen
+from markdown import markdown
 
 raw_version = open('VERSION').read().strip(' \n')
-suffix = uuid4().hex.replace('-', '')[:8]
+suffix = popen('git rev-parse --short HEAD').read().strip(' \n')
 
 setup(
     name="waterch-tasker",
@@ -22,8 +23,7 @@ setup(
     author="Chen Runze",
     author_email="chenrz925@icloud.com",
     description="A scalable and extendable experiment task scheduler framework.",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
+    long_description=markdown(open("README.md").read()),
     url="https://github.com/chenrz925/waterch-tasker",  # project home page, if any
     project_urls={
         "Documentation": "https://waterch-tasker.readthedocs.io/zh_CN/latest/",
