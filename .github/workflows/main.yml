@@ -28,10 +28,11 @@ jobs:
         # PyPI user
         # user: __token__ # optional, default is __token__
         # Password for your PyPI user or an access token
-        # password: pypi-AgEIcHlwaS5vcmcCJGMwZDIzNmYyLTgyMmQtNGI0ZC1hYzI4LTFkM2Q5ZmU3NzNlMQACJXsicGVybWlzc2lvbnMiOiAidXNlciIsICJ2ZXJzaW9uIjogMX0AAAYgJq1dHjImSLYhKoE4HAZ3T77bLZwIsAnKCedvv7exqnc
+        # password: ${{secrets.PYPI_TOKEN}}
         # repository_url: https://github.com/chenrz925/waterch-tasker.git
     - name: PyPI Deployment
       uses: casperdcl/deploy-pypi@v1
       with:
         # PyPI password or API token
-        password: pypi-AgEIcHlwaS5vcmcCJGMwZDIzNmYyLTgyMmQtNGI0ZC1hYzI4LTFkM2Q5ZmU3NzNlMQACJXsicGVybWlzc2lvbnMiOiAidXNlciIsICJ2ZXJzaW9uIjogMX0AAAYgJq1dHjImSLYhKoE4HAZ3T77bLZwIsAnKCedvv7exqnc
+        password: ${{secrets.PYPI_TOKEN}}
+        build: true
