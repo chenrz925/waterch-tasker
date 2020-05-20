@@ -1,5 +1,6 @@
 site_name: waterch-tasker
 theme: material
+site_url: https://waterch-tasker.readthedocs.io/en/latest/
 nav:
   - Home: index.md
   - API:
@@ -9,7 +10,6 @@ plugins:
   - search
   - mkdocstrings:
       default_handler: python
-      site_url: https://waterch-tasker.readthedocs.io/en/latest/
       handlers:
         python:
           rendering:
