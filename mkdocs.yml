@@ -9,6 +9,7 @@ plugins:
   - search
   - mkdocstrings:
       default_handler: python
+      site_url: https://waterch-tasker.readthedocs.io/en/latest/
       handlers:
         python:
           rendering:
