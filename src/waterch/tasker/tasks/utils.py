@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from waterch.tasker import Definition, Profile, Return, value
 from waterch.tasker.storage import Storage
-from waterch.tasker.tasks._base import Task
+from waterch.tasker.tasks.base import Task
 
 
 class GenerateIdTask(Task):

@@ -12,6 +12,17 @@ from waterch.tasker.storage import Storage
 
 
 class Task(ProfileMixin, metaclass=ABCMeta):
+    """
+    The container class of a task.
+
+    To interactive with other task, you need to implement `require`, `provide`
+    methods to declare the fields in shared storage.
+
+    To implement action of a task, you need to implement `invoke` method.
+
+    To define the schema of task profile, you need to implement `define` method
+    which override from [`ProfileMixin` class][waterch.tasker.mixin.ProfileMixin].
+    """
     @abstractmethod
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
         raise NotImplementedError('Please implement the task process.')
