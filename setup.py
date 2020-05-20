@@ -44,5 +44,8 @@ setup(
         ],
     },
     # could also include long_description, download_url, etc.
-    install_requires=open("requirements.txt").readlines(),
+    install_requires=filter(
+        lambda package: not package.startswith('waterch-tasker'),
+        open("requirements.txt").readlines()
+    ),
 )
