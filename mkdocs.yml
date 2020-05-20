@@ -1,2 +1,5 @@
 site_name: waterch-tasker
 theme: readthedocs
+pages:
+  - Home: index.md
+  - API: api.autodoc

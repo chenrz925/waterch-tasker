@@ -13,9 +13,9 @@ class Profile(Box):
 
 
 class Return(Enum):
-    SUCCESS = 0b0000
-    ERROR = 0b1000
-    EXIT = 0b0001
-    WRITE = 0b0010
-    READ = 0b0100
-
+    SUCCESS = 0b00000
+    ERROR = 0b01000
+    EXIT = 0b00001
+    WRITE = 0b00010
+    READ = 0b00100
+    RETRY = 0b10000

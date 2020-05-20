@@ -9,22 +9,24 @@ from waterch.tasker.tasks._base import Task
 
 
 class GenerateIdTask(Task):
-    def generate_datetime(self) -> Text:
+    def generate_datetime(self, profile) -> Text:
         return datetime.now().strftime('%Y%m%d%H%M%S')
 
-    def generate_uuid(self) -> Text:
+    def generate_uuid(self, profile) -> Text:
         return uuid4().hex.replace('-', '')
+
+    def generate_label(self, profile) -> Text:
+        try:
+            return profile.label
+        except Exception:
+            raise RuntimeError('Please define "label" attribute in profile when including label item.')
 
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> Return:
         def generate(name: Text) -> Text:
-            if name == 'datetime':
-                return self.generate_datetime()
-            elif name == 'uuid':
-                return self.generate_uuid()
-            elif name == 'label':
-                return profile.label
-            else:
-                return ''
+            generater = getattr(self, f'generate_{name}', None)
+            if generater is None:
+                raise RuntimeError(f'ID item {name} is invalid, please check and fix.')
+            return generater(profile)
 
         shared['id'] = profile.by.join(filter(lambda t: t != '', map(generate, profile.join)))
         logger.debug(f'ID: {shared["id"]}')

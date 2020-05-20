@@ -169,7 +169,9 @@ class Launcher(ProfileMixin):
                 datefmt=log_datetime_format,
             )
         # Launch tasks
-        for meta in profile.__meta__:
+        meta_index = 0
+        while meta_index < len(profile.__meta__):
+            meta = profile.__meta__[meta_index]
             task_cls = import_reference(meta.reference)
             try:
                 if meta.include:
@@ -180,10 +182,12 @@ class Launcher(ProfileMixin):
                 print('Failed to access task profile, stop running.')
                 shared.dump()
                 break
-            task = task_cls()
+            task: Task = task_cls()
             task_display = f'{meta.reference}[{hex(hash(task))}]'
             task_logger = get_logger(task_display)
             print(task_display)
+            print(f'require: {" ".join(task.require())}')
+            print(f'provide: {" ".join(task.provide())}')
             print(f'{"-" * (slash_number - 1)}>')
             start_time = datetime.now()
             state = task.invoke(task_profile, shared, task_logger)
@@ -199,6 +203,8 @@ class Launcher(ProfileMixin):
             if state & Return.EXIT.value:
                 print('Stopped by task.')
                 break
+            if not (state & Return.RETRY.value):
+                meta_index += 1
 
 
 def launch():
