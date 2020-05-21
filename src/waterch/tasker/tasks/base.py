@@ -25,14 +25,33 @@ class Task(ProfileMixin, metaclass=ABCMeta):
     """
     @abstractmethod
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        """
+        Implement this method to complete the features or actions in the task.
+
+        :param profile: Runtime profile defined in TOML file.
+        :type profile: Profile
+        :param shared: Shared storage in the whole lifecycle.
+        :type shared: Storage
+        :param logger: The logger named with this Task.
+        :type logger: Logger
+        :return: The state defined in [`Return` enumeration][waterch.tasker.typedef.Return].
+        """
         raise NotImplementedError('Please implement the task process.')
 
     @classmethod
     @abstractmethod
     def require(cls) -> List[Text]:
+        """
+
+        :return:
+        """
         raise NotImplementedError('Please define required keys.')
 
     @classmethod
     @abstractmethod
     def provide(cls) -> List[Text]:
+        """
+
+        :return:
+        """
         raise NotImplementedError('Please define provided keys.')

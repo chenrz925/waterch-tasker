@@ -11,7 +11,7 @@ from logging import getLogger as get_logger, basicConfig as basic_config
 from datetime import datetime
 
 from toml import dump as toml_dump
-from waterch.tasker._typedef import Profile, Return
+from waterch.tasker.typedef import Profile, Return
 
 from waterch.tasker import Definition, value
 from waterch.tasker.mixin import ProfileMixin
