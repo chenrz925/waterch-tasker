@@ -61,7 +61,10 @@ class Task(ProfileMixin, metaclass=ABCMeta):
 
     ```
 
-    The profile is configured below named `example.toml`.
+    The profile is configured below named `example.toml`. When using `waterch-tasker`,
+    a task must be configured with a profile file.
+    You can create profile files separately using `include` feature, as well as
+    define action of all tasks in one profile file.
 
     ```toml
     __schema__ = "waterch.tasker.launcher.Launcher"
@@ -121,6 +124,11 @@ class Task(ProfileMixin, metaclass=ABCMeta):
     @abstractmethod
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
         """
+        All activities of a task defined in this method.
+        You can access configurations from profile object,
+        access data from other tasks or provide data to other tasks by
+        using shared. A logger is also provide with a task.
+
         Args:
             profile: Runtime profile defined in TOML file.
             shared: Shared storage in the whole lifecycle.
@@ -135,9 +143,12 @@ class Task(ProfileMixin, metaclass=ABCMeta):
     @abstractmethod
     def require(cls) -> List[Text]:
         """
-
+        Declare the keys required by this task.
         Returns:
-
+            A list contains all keys which your task requires.
+        Warnings:
+            If you want access any key from shared, please declare them in this method.
+            Reading a key without declaration in `require` will be forbidden.
         """
         raise NotImplementedError('Please define required keys.')
 
@@ -145,6 +156,11 @@ class Task(ProfileMixin, metaclass=ABCMeta):
     @abstractmethod
     def provide(cls) -> List[Text]:
         """
-        :return:
+        Declare the keys provided by this task.
+        Returns:
+            A list contains all keys which your task provides.
+        Warnings:
+            If you want access any key from shared, please declare them in this method.
+            Writing a key without declaration in `provide` will be forbidden.
         """
         raise NotImplementedError('Please define provided keys.')

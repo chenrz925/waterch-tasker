@@ -4,8 +4,7 @@ site_url: https://waterch-tasker.readthedocs.io/en/latest/
 nav:
   - Home: index.md
   - API:
-      waterch.tasker:
-        tasks: api/tasks.md
+      tasks: api/tasks.md
 plugins:
   - search
   - mkdocstrings:
