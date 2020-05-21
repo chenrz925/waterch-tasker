@@ -5,8 +5,8 @@ __all__ = [
 
 from argparse import ArgumentParser, Namespace
 from typing import List
-from sys import stdout, stderr
-from os import makedirs, path
+from sys import stdout, stderr, path as syspath
+from os import makedirs, path, curdir
 from logging import getLogger as get_logger, basicConfig as basic_config
 from datetime import datetime
 
@@ -86,6 +86,7 @@ class Launcher(ProfileMixin):
         return self._argparser().parse_args()
 
     def invoke(self, namespace: Namespace):
+        syspath.append(curdir)
         command = getattr(self, f'command_{namespace.command}', self.command_unknown)
         command(namespace)
 
@@ -154,7 +155,7 @@ class Launcher(ProfileMixin):
         shared = storage_cls(**profile.__setting__.storage)
         # Configure logging
         log_datetime_format = '%Y-%m-%dT%H:%M:%S'
-        log_format = '%(asctime)s|%(levelname)s|%(name)s>%(message)s'
+        log_format = '%(asctime)s|%(levelname)s|%(name)s> %(message)s'
         if profile.__setting__.log.stdout:
             basic_config(
                 stream=stdout,

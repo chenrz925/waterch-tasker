@@ -30,7 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/chenrz925/waterch-tasker",  # project home page, if any
     project_urls={
-        "Documentation": "https://waterch-tasker.readthedocs.io/zh_CN/latest/",
+        "Documentation": "https://waterch-tasker.readthedocs.io/en/latest/",
         "Source Code": "https://github.com/chenrz925/waterch-tasker",
     },
     classifiers=[
@@ -44,8 +44,5 @@ setup(
         ],
     },
     # could also include long_description, download_url, etc.
-    install_requires=filter(
-        lambda package: not package.startswith('waterch-tasker'),
-        open("requirements.txt").readlines()
-    ),
+    install_requires=open("requirements.txt").readlines()
 )
