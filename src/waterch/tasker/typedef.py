@@ -1,14 +1,14 @@
 from collections import namedtuple
+from enum import Enum
 
 from box import Box
-from enum import Enum
 
 Definition = namedtuple('Definition', ('name', 'type', 'children'))
 
 
 class Profile(Box):
     def __init__(self, *args, **kwargs):
-        kwargs['frozen_box'] =True
+        kwargs['frozen_box'] = True
         super(Profile, self).__init__(*args, **kwargs)
 
 

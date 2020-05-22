@@ -4,9 +4,9 @@ __all__ = [
 ]
 
 from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 from sys import stderr
 from typing import Text, Any
-from collections import OrderedDict
 
 
 class Storage(metaclass=ABCMeta):

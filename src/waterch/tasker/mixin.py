@@ -5,9 +5,9 @@ __all__ = [
 ]
 
 from abc import ABCMeta, abstractmethod
-from typing import List, Tuple, Text, Any, Union, Dict, Type
-from re import match as re_match
 from collections import OrderedDict
+from re import match as re_match
+from typing import List, Tuple, Text, Any, Union, Dict, Type
 
 from waterch.tasker.typedef import Definition
 

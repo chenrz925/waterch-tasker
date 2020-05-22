@@ -3,5 +3,5 @@ __all__ = [
     'utils'
 ]
 
-from waterch.tasker.tasks.base import Task
 from waterch.tasker.tasks import utils
+from waterch.tasker.tasks.base import Task
