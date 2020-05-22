@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 from logging import Logger
 from typing import List, Text
 
-from waterch.tasker import Profile
+from waterch.tasker.typedef import Profile
 from waterch.tasker.mixin import ProfileMixin
 from waterch.tasker.storage import Storage
 

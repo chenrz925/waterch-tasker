@@ -12,11 +12,10 @@ from typing import List
 
 from toml import dump as toml_dump
 
-from waterch.tasker import Definition, value
-from waterch.tasker.mixin import ProfileMixin
+from waterch.tasker.mixin import ProfileMixin, value
 from waterch.tasker.storage import DictStorage
 from waterch.tasker.tasks import Task
-from waterch.tasker.typedef import Profile, Return
+from waterch.tasker.typedef import Profile, Return, Definition
 from waterch.tasker.utils import import_reference
 
 
