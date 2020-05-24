@@ -3,12 +3,15 @@ __all__ = [
 ]
 
 from abc import ABCMeta, abstractmethod
-from logging import Logger
+from functools import reduce
+from logging import Logger, getLogger as get_logger
+from multiprocessing.dummy import Pool
 from typing import List, Text
 
-from waterch.tasker.typedef import Profile
-from waterch.tasker.mixin import ProfileMixin
-from waterch.tasker.storage import Storage
+from waterch.tasker.mixin import ProfileMixin, value
+from waterch.tasker.storage import Storage, MultiTaskStorageView
+from waterch.tasker.typedef import Definition, Return, Profile
+from waterch.tasker.utils import import_reference
 
 
 class Task(ProfileMixin, metaclass=ABCMeta):
@@ -165,3 +168,91 @@ class Task(ProfileMixin, metaclass=ABCMeta):
             Writing a key without declaration in `provide` will be forbidden.
         """
         raise NotImplementedError('Please define provided keys.')
+
+
+class ForkTask(Task):
+    class ExitSignal(Exception):
+        pass
+
+    def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        def invoke_check(task, profile, shared, logger) -> int:
+            state = task.invoke(profile, shared, logger)
+            if state & Return.WRITE.value:
+                shared.dump()
+            if state & Return.READ.value:
+                shared.load()
+            if state & Return.EXIT.value:
+                print('Stopped by task.')
+                raise self.ExitSignal
+            return state
+
+        def execute(meta):
+            task_cls = import_reference(profile.reference)
+            task = task_cls()
+            task_logger_name = f'{meta.reference}[{hex(hash(task))}]@{hex(hash(self))}'
+            task_logger = get_logger(task_logger_name)
+            task_shared = MultiTaskStorageView(storage=shared, task=task, links=[])
+            if meta.include:
+                task_profile = Profile.from_toml(filename=meta.path)
+            else:
+                task_profile = profile[meta.profile]
+            state = invoke_check(task, task_profile, task_shared, task_logger)
+            return \
+                state, \
+                task, \
+                (task_profile, task_shared, task_logger)
+
+        def retry(state: int, task, context):
+            if state | Return.RETRY.value:
+                return invoke_check(task, *context), task, context
+            else:
+                return state, task, context
+
+        pool = Pool(profile.worker)
+        execute_tasks = list(filter(
+            lambda meta: meta.execute,
+            profile.tasks
+        ))
+        try:
+            results = pool.map(
+                func=execute,
+                iterable=execute_tasks,
+                chunksize=int(len(execute_tasks) // profile.worker)
+            )
+
+            while reduce(lambda t, s: t | s[0], results, Return.SUCCESS.value):
+                results = pool.map(
+                    func=lambda args: retry(*args),
+                    iterable=results,
+                    chunksize=int(len(execute_tasks) // profile.worker)
+                )
+
+        except self.ExitSignal:
+            pool.close()
+            return Return.ERROR.value | Return.EXIT.value
+
+        pool.close()
+        return Return.SUCCESS.value
+
+    @classmethod
+    def require(cls) -> List[Text]:
+        return []
+
+    @classmethod
+    def provide(cls) -> List[Text]:
+        return []
+
+    @classmethod
+    def define(cls) -> List[Definition]:
+        return [
+            value('worker', int),
+            value('reference', str),
+            value('tasks', list, [
+                [
+                    value('include', bool),
+                    value('path', str),
+                    value('profile', str),
+                    value('execute', bool)
+                ]
+            ])
+        ]

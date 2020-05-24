@@ -7,7 +7,7 @@ from uuid import uuid4
 from waterch.tasker.typedef import Definition, Profile, Return
 from waterch.tasker.mixin import value
 from waterch.tasker.storage import Storage
-from waterch.tasker.tasks.base import Task
+from waterch.tasker.tasks.containers import Task
 
 
 class GenerateIdTask(Task):
@@ -156,3 +156,5 @@ class SetEnvironmentTask(Task):
         return [
             value('env', list, [[str]]),
         ]
+
+

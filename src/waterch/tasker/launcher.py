@@ -190,7 +190,12 @@ class Launcher(ProfileMixin):
             print(f'provide: {" ".join(task.provide())}')
             print(f'{"-" * (slash_number - 1)}>')
             start_time = datetime.now()
-            state = task.invoke(task_profile, shared, task_logger)
+            user_kill = False
+            try:
+                state = task.invoke(task_profile, shared, task_logger)
+            except KeyboardInterrupt:
+                state = Return.WRITE.value
+                user_kill = True
             end_time = datetime.now()
             print(f'<{"-" * (slash_number - 1)}')
             state_label = 'Failed' if state & Return.ERROR.value else 'Successfully finished'
@@ -202,6 +207,9 @@ class Launcher(ProfileMixin):
                 shared.load()
             if state & Return.EXIT.value:
                 print('Stopped by task.')
+                break
+            if user_kill:
+                print('Stopped by user.')
                 break
             if not (state & Return.RETRY.value):
                 meta_index += 1
