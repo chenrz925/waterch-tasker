@@ -9,7 +9,7 @@ from multiprocessing.dummy import Pool
 from typing import List, Text
 
 from waterch.tasker.mixin import ProfileMixin, value
-from waterch.tasker.storage import Storage, MultiTaskStorageView
+from waterch.tasker.storage import Storage, ForkStorageView
 from waterch.tasker.typedef import Definition, Return, Profile
 from waterch.tasker.utils import import_reference
 
@@ -24,104 +24,105 @@ class Task(ProfileMixin, metaclass=ABCMeta):
     To define the schema of task profile, you need to implement `define` method
     which override from [`ProfileMixin` class][waterch.tasker.mixin.ProfileMixin].
 
-    We will introduce a example to describe the usage of `Task` class.
-    For example, we constrct a class named `ExampleTask` in "example.py",
-    so the reference of `ExampleTask` is `example.ExampleTask`.
+    Examples:
+        We will introduce a example to describe the usage of `Task` class.
+        For example, we constrct a class named `ExampleTask` in "example.py",
+        so the reference of `ExampleTask` is `example.ExampleTask`.
 
-    ```python
-    from logging import Logger
-    from typing import List, Text
+        ```python
+        from logging import Logger
+        from typing import List, Text
 
-    from waterch.tasker import Definition, Profile, Return, value
-    from waterch.tasker.storage import Storage
-    from waterch.tasker.tasks import Task
+        from waterch.tasker import Definition, Profile, Return, value
+        from waterch.tasker.storage import Storage
+        from waterch.tasker.tasks import Task
 
 
-    class ExampleTask(Task):
-        def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
-            print('This is an example.')
-            print(f'{profile.example}')
-            logger.info('Example INFO')
-            logger.debug('Example DEBUG')
-            logger.warning('Example WARNING')
-            logger.error('Example ERROR')
-            shared['example'] = 'This is an example'
-            return Return.SUCCESS.value
+        class ExampleTask(Task):
+            def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+                print('This is an example.')
+                print(f'{profile.example}')
+                logger.info('Example INFO')
+                logger.debug('Example DEBUG')
+                logger.warning('Example WARNING')
+                logger.error('Example ERROR')
+                shared['example'] = 'This is an example'
+                return Return.SUCCESS.value
 
-        @classmethod
-        def require(cls) -> List[Text]:
-            return []
+            def require(self) -> List[Text]:
+                return []
 
-        @classmethod
-        def provide(cls) -> List[Text]:
-            return ['example']
+            def provide(self) -> List[Text]:
+                return ['example']
 
-        @classmethod
-        def define(cls) -> List[Definition]:
-            return [
-                value('example', str)
-            ]
+            def remove(self) -> List[Text]:
+                return []
 
-    ```
+            def define(self) -> List[Definition]:
+                return [
+                    value('example', str)
+                ]
 
-    The profile is configured below named `example.toml`. When using `waterch-tasker`,
-    a task must be configured with a profile file.
-    You can create profile files separately using `include` feature, as well as
-    define action of all tasks in one profile file.
+        ```
 
-    ```toml
-    __schema__ = "waterch.tasker.launcher.Launcher"
-    __name__ = "Example"
-    __author__ = "Author"
-    __version__ = "1.0.0"
-    __email__ = "author@example.com"
-    __abstract__ = ""
-    [__setting__]
-        [__setting__.storage]
-        reference = "waterch.tasker.storage.DictStorage"
-        [__setting__.log]
-        stdout = true
-        level = "DEBUG"
-    [[__meta__]]
-    reference = "example.ExampleTask"
-    include = false
-    path = ""
-    profile = "example"
-    execute = true
+        The profile is configured below named `example.toml`. When using `waterch-tasker`,
+        a task must be configured with a profile file.
+        You can create profile files separately using `include` feature, as well as
+        define action of all tasks in one profile file.
 
-    [example]
-    example = "Hello world"
-    ```
+        ```toml
+        __schema__ = "waterch.tasker.launcher.Launcher"
+        __name__ = "Example"
+        __author__ = "Author"
+        __version__ = "1.0.0"
+        __email__ = "author@example.com"
+        __abstract__ = ""
+        [__setting__]
+            [__setting__.storage]
+            reference = "waterch.tasker.storage.DictStorage"
+            [__setting__.log]
+            stdout = true
+            level = "DEBUG"
+        [[__meta__]]
+        reference = "example.ExampleTask"
+        include = false
+        path = ""
+        profile = "example"
+        execute = true
 
-    Run the following command.
+        [example]
+        example = "Hello world"
+        ```
 
-    ```bash
-    waterch-tasker launch -f example.toml
-    ```
+        Run the following command.
 
-    If it run like this, your first task using waterch-tasker has been created successfully.
+        ```bash
+        waterch-tasker launch -f example.toml
+        ```
 
-    ```
-    --------------------
-    Example (1.0.0)
-    Author: Author
-    E-Mail: author@example.com
+        If it run like this, your first task using waterch-tasker has been created successfully.
 
-    --------------------
+        ```
+        --------------------
+        Example (1.0.0)
+        Author: Author
+        E-Mail: author@example.com
 
-    example.ExampleTask[0x2d76307e28]
-    require:
-    provide: example
-    ------------------->
-    This is an example.
-    Hello world
-    2020-05-21T11:46:25|INFO|example.ExampleTask[0x2d76307e28]>Example INFO
-    2020-05-21T11:46:25|DEBUG|example.ExampleTask[0x2d76307e28]>Example DEBUG
-    2020-05-21T11:46:25|WARNING|example.ExampleTask[0x2d76307e28]>Example WARNING
-    2020-05-21T11:46:25|ERROR|example.ExampleTask[0x2d76307e28]>Example ERROR
-    <-------------------
-    Successfully finished in 0.000998 seconds.
-    ```
+        --------------------
+
+        example.ExampleTask[0x2d76307e28]
+        require:
+        provide: example
+        ------------------->
+        This is an example.
+        Hello world
+        2020-05-21T11:46:25|INFO|example.ExampleTask[0x2d76307e28]>Example INFO
+        2020-05-21T11:46:25|DEBUG|example.ExampleTask[0x2d76307e28]>Example DEBUG
+        2020-05-21T11:46:25|WARNING|example.ExampleTask[0x2d76307e28]>Example WARNING
+        2020-05-21T11:46:25|ERROR|example.ExampleTask[0x2d76307e28]>Example ERROR
+        <-------------------
+        Successfully finished in 0.000998 seconds.
+        ```
 
     """
 
@@ -132,20 +133,17 @@ class Task(ProfileMixin, metaclass=ABCMeta):
         You can access configurations from profile object,
         access data from other tasks or provide data to other tasks by
         using shared. A logger is also provide with a task.
-
         Args:
             profile: Runtime profile defined in TOML file.
             shared: Shared storage in the whole lifecycle.
             logger: The logger named with this Task.
-
         Returns:
             The state defined in [`Return` enumeration][waterch.tasker.typedef.Return].
         """
         raise NotImplementedError('Please implement the task process.')
 
-    @classmethod
     @abstractmethod
-    def require(cls) -> List[Text]:
+    def require(self) -> List[Text]:
         """
         Declare the keys required by this task.
         Returns:
@@ -156,9 +154,8 @@ class Task(ProfileMixin, metaclass=ABCMeta):
         """
         raise NotImplementedError('Please define required keys.')
 
-    @classmethod
     @abstractmethod
-    def provide(cls) -> List[Text]:
+    def provide(self) -> List[Text]:
         """
         Declare the keys provided by this task.
         Returns:
@@ -169,10 +166,70 @@ class Task(ProfileMixin, metaclass=ABCMeta):
         """
         raise NotImplementedError('Please define provided keys.')
 
+    @abstractmethod
+    def remove(self) -> List[Text]:
+        """
+        Declare the keys removed by this task.
+        Returns:
+            A list contains all keys which your task removes.
+        Warnings:
+            If you want access any key from shared, please declare them in this method.
+            Deleting a key without declaration in `remove` will be forbidden.
+        """
+        raise NotImplementedError('Please define removed keys.')
+
 
 class ForkTask(Task):
+    """
+    The container task contains same tasks with different profiles.
+
+    Provided fields in `shared` will be forked to multiple fields.
+    To process them, you should execute a [`MapTask` instance][waterch.tasker.tasks.containers.MapTask]
+    or a ['ReduceTask' instance][waterch.tasker.tasks.containers.ReduceTask].
+
+    Examples:
+        You can execute a `ForkTask` using a profile file just like the following one.
+        ```toml
+        __schema__ = "waterch.tasker.tasks.containers.ForkTask"
+        worker = 10
+        reference = "example.ExampleTask"
+
+        [[tasks]]
+        include = false
+        path = ""
+        profile = "task1"
+        execute = true
+
+        [task1]
+        example = "Hello world 1"
+
+        [[tasks]]
+        include = false
+        path = ""
+        profile = "task2"
+        execute = true
+
+        [task2]
+        example = "Hello world 2"
+
+        [[tasks]]
+        include = false
+        path = ""
+        profile = "task3"
+        execute = true
+
+        [task3]
+        example = "Hello world 3"
+        ```
+    """
+
     class ExitSignal(Exception):
         pass
+
+    def __init__(self):
+        super(ForkTask, self).__init__()
+        self._require = []
+        self._provide = []
 
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
         def invoke_check(task, profile, shared, logger) -> int:
@@ -189,9 +246,11 @@ class ForkTask(Task):
         def execute(meta):
             task_cls = import_reference(profile.reference)
             task = task_cls()
+            self._require.extend(task.require())
+            self._provide.extend(task.provide())
             task_logger_name = f'{meta.reference}[{hex(hash(task))}]@{hex(hash(self))}'
             task_logger = get_logger(task_logger_name)
-            task_shared = MultiTaskStorageView(storage=shared, task=task, links=[])
+            task_shared = ForkStorageView(storage=shared.storage(), task=task)
             if meta.include:
                 task_profile = Profile.from_toml(filename=meta.path)
             else:
@@ -234,16 +293,42 @@ class ForkTask(Task):
         pool.close()
         return Return.SUCCESS.value
 
-    @classmethod
-    def require(cls) -> List[Text]:
-        return []
+    def require(self) -> List[Text]:
+        """
+        This task requires fields mirrored from referenced task.
 
-    @classmethod
-    def provide(cls) -> List[Text]:
-        return []
+        Returns:
+            Same to referenced task.
+        """
+        return self._require
+
+    def provide(self) -> List[Text]:
+        """
+        This task provides fields mirrored from referenced task.
+
+        Returns:
+            Same to referenced task.
+        """
+        return self._provide
 
     @classmethod
     def define(cls) -> List[Definition]:
+        """
+        Examples:
+            ```toml
+            __schema__ = "waterch.tasker.tasks.containers.ForkTask"
+            worker = 0
+            reference = ""
+            [[tasks]]
+            include = true
+            path = ""
+            profile = ""
+            execute = true
+            ```
+
+        Returns:
+            Schema of profile
+        """
         return [
             value('worker', int),
             value('reference', str),
@@ -256,3 +341,16 @@ class ForkTask(Task):
                 ]
             ])
         ]
+
+    def remove(self) -> List[Text]:
+        """
+        This task removes fields mirrored from referenced task.
+
+        Returns:
+            Same to referenced task.
+        """
+        return []
+
+
+class MapTask(Task):
+    pass

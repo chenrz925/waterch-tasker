@@ -13,10 +13,11 @@ from typing import List
 from toml import dump as toml_dump
 
 from waterch.tasker.mixin import ProfileMixin, value
-from waterch.tasker.storage import DictStorage
+from waterch.tasker.storage import DictStorage, CommonStorageView
 from waterch.tasker.tasks import Task
 from waterch.tasker.typedef import Profile, Return, Definition
 from waterch.tasker.utils import import_reference
+from waterch.tasker._version import version
 
 
 class Launcher(ProfileMixin):
@@ -53,19 +54,31 @@ class Launcher(ProfileMixin):
             prog='waterch-tasker',
             description='A scalable and extendable experiment task scheduler framework'
         )
+        parser.add_argument(
+            '-v', '--version',
+            action='version',
+            version=f'%(prog)s {version}',
+        )
         subcommands = parser.add_subparsers(
             title='command',
-            description='execute this command',
-            dest='command'
+            description='execute a command of waterch-tasker',
+            dest='command',
+            help='choose a command',
         )
-        launch_parser = subcommands.add_parser('launch')
+        launch_parser = subcommands.add_parser(
+            'launch',
+            help='launch tasks by a profile'
+        )
         launch_parser.add_argument(
             '-f', '--file',
             nargs=1,
             required=True,
             help='launch tasks defined by this file'
         )
-        template_parser = subcommands.add_parser('template')
+        template_parser = subcommands.add_parser(
+            'template',
+            help='generate a profile template by a class reference',
+        )
         template_parser.add_argument(
             '-r', '--reference',
             nargs='+',
@@ -192,7 +205,7 @@ class Launcher(ProfileMixin):
             start_time = datetime.now()
             user_kill = False
             try:
-                state = task.invoke(task_profile, shared, task_logger)
+                state = task.invoke(task_profile, CommonStorageView(storage=shared, task=task), task_logger)
             except KeyboardInterrupt:
                 state = Return.WRITE.value
                 user_kill = True

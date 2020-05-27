@@ -8,10 +8,12 @@ __all__ = [
     'include',
     'launch',
     'utils',
-    'tasks'
+    'tasks',
+    'version'
 ]
 
 from waterch.tasker import storage, mixin, utils, tasks
 from waterch.tasker.launcher import launch
 from waterch.tasker.mixin import value, include
 from waterch.tasker.typedef import Profile, Definition, Return
+from waterch.tasker._version import version

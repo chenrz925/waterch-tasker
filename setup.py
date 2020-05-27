@@ -1,12 +1,15 @@
 import pip
+import sys
 
 pip.main(['install', '--upgrade', 'setuptools', 'wheel', 'twine'])
 pip.main(['install', '-r', 'requirements.txt'])
+sys.path.append('src')
 
 from setuptools import setup, find_namespace_packages
 from datetime import datetime
+import waterch.tasker
 
-raw_version = open('VERSION').read().strip(' \n')
+raw_version = waterch.tasker.__version__
 suffix = datetime.now().strftime('%Y%m%d%H%M')
 
 setup(

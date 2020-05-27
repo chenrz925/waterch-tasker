@@ -55,17 +55,15 @@ class GenerateIdTask(Task):
         logger.debug(f'ID: {shared["id"]}')
         return Return.SUCCESS.value
 
-    @classmethod
-    def require(cls) -> List[Text]:
+    def require(self) -> List[Text]:
         """
         This task requires nothing.
         Returns:
-            Nothing.
+            Nothing
         """
-        return []
+        return ['id']
 
-    @classmethod
-    def provide(cls) -> List[Text]:
+    def provide(self) -> List[Text]:
         """
         This task provides:
 
@@ -74,20 +72,28 @@ class GenerateIdTask(Task):
         | id   | Generated ID provided to other tasks. |
 
         Returns:
-            Only contains "id".
+            Only contains "id"
         """
         return ['id']
+
+    def remove(self) -> List[Text]:
+        """
+        This task removes nothing.
+        Returns:
+            Nothing
+        """
 
     @classmethod
     def define(cls) -> List[Definition]:
         """
-        ```toml
-        __schema__ = "waterch.tasker.tasks.utils.GenerateIdTask"
-        by = ""
-        label = ""
-        ```
+        Examples:
+            ```toml
+            __schema__ = "waterch.tasker.tasks.utils.GenerateIdTask"
+            by = ""
+            label = ""
+            ```
         Returns:
-            Schema of profile.
+            Schema of profile
         """
         return [
             value('by', str),
@@ -120,8 +126,7 @@ class SetEnvironmentTask(Task):
             logger.debug(f'  {"=".join(item)}')
         return Return.SUCCESS.value
 
-    @classmethod
-    def require(cls) -> List[Text]:
+    def require(self) -> List[Text]:
         """
         This task requires nothing.
 
@@ -130,11 +135,18 @@ class SetEnvironmentTask(Task):
         """
         return []
 
-    @classmethod
-    def provide(cls) -> List[Text]:
+    def provide(self) -> List[Text]:
         """
         This task provides nothing.
 
+        Returns:
+            Nothing
+        """
+        return []
+
+    def remove(self) -> List[Text]:
+        """
+        This task removes nothing.
         Returns:
             Nothing
         """

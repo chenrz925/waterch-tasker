@@ -13,13 +13,14 @@ class TestMultiTask(Task):
         shared['index'] = profile.index
         return Return.ERROR.value | Return.RETRY.value
 
-    @classmethod
-    def require(cls) -> List[Text]:
+    def require(self) -> List[Text]:
         return []
 
-    @classmethod
-    def provide(cls) -> List[Text]:
+    def provide(self) -> List[Text]:
         return ['index']
+
+    def remove(self) -> List[Text]:
+        return []
 
     @classmethod
     def define(cls) -> List[Definition]:
