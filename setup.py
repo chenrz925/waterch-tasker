@@ -9,7 +9,7 @@ from setuptools import setup, find_namespace_packages
 from datetime import datetime
 import waterch.tasker
 
-raw_version = waterch.tasker.__version__
+raw_version = waterch.tasker.version
 suffix = datetime.now().strftime('%Y%m%d%H%M')
 
 setup(
