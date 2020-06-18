@@ -376,7 +376,7 @@ class MapTask(_ContainerTask, ProfileMixin):
 
     Provided fields in `shared` will be mapped to new fields.
     You can also combine fields into dependent single field by a
-    ['ReduceTask' instance][waterch.tasker.tasks.containers.ReduceTask]
+    [`ReduceTask` instance][waterch.tasker.tasks.containers.ReduceTask]
     """
     STORAGE_VIEW_CLASS = MapStorageView
 
