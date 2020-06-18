@@ -12,6 +12,8 @@ from waterch.tasker.tasks.containers import Task
 
 class GenerateIdTask(Task):
     """
+    <b>waterch.tasker.tasks.utils.GenerateIdTask</b>
+
     Task to generate ID.
     The task will declare a field named `id` in shared storage.
 
@@ -104,6 +106,8 @@ class GenerateIdTask(Task):
 
 class SetEnvironmentTask(Task):
     """
+    <b>waterch.tasker.tasks.utils.SetEnvironmentTask</b>
+
     Task to set environment values.
     """
 
