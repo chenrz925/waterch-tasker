@@ -9,7 +9,7 @@ from multiprocessing.dummy import Pool
 from typing import List, Text
 
 from waterch.tasker.mixin import ProfileMixin, value
-from waterch.tasker.storage import Storage, ForkStorageView
+from waterch.tasker.storage import Storage, ForkStorageView, MapStorageView, ReduceStorageView
 from waterch.tasker.typedef import Definition, Return, Profile
 from waterch.tasker.utils import import_reference
 
@@ -26,7 +26,7 @@ class Task(ProfileMixin, metaclass=ABCMeta):
 
     Examples:
         We will introduce a example to describe the usage of `Task` class.
-        For example, we constrct a class named `ExampleTask` in "example.py",
+        For example, we construct a class named `ExampleTask` in "example.py",
         so the reference of `ExampleTask` is `example.ExampleTask`.
 
         ```python
@@ -132,7 +132,7 @@ class Task(ProfileMixin, metaclass=ABCMeta):
         All activities of a task defined in this method.
         You can access configurations from profile object,
         access data from other tasks or provide data to other tasks by
-        using shared. A logger is also provide with a task.
+        using shared. A logger is also provided with a task.
         Args:
             profile: Runtime profile defined in TOML file.
             shared: Shared storage in the whole lifecycle.
@@ -179,8 +179,71 @@ class Task(ProfileMixin, metaclass=ABCMeta):
         raise NotImplementedError('Please define removed keys.')
 
 
-class ForkTask(Task):
+class _ContainerTask(Task, metaclass=ABCMeta):
+    def __init__(self):
+        super(_ContainerTask, self).__init__()
+        self._require = []
+        self._provide = []
+        self._remove = []
+
+    class ExitSignal(Exception):
+        pass
+
+    @classmethod
+    def _invoke_check(cls, task, profile, shared, logger) -> int:
+        state = task.invoke(profile, shared, logger)
+        if state & Return.WRITE.value:
+            shared.dump()
+        if state & Return.READ.value:
+            shared.load()
+        if state & Return.EXIT.value:
+            print('Stopped by task.')
+            raise cls.ExitSignal
+        return state
+
+    def _register_task(self, task: Task):
+        for key in task.require():
+            if key not in self._require:
+                self._require.append(key)
+        for key in task.provide():
+            if key not in self._provide:
+                self._provide.append(key)
+        for key in task.remove():
+            if key not in self._remove:
+                self._remove.append(key)
+
+    def require(self) -> List[Text]:
+        """
+        This task requires fields mirrored from referenced task.
+
+        Returns:
+            Same to referenced task.
+        """
+        return self._require
+
+    def provide(self) -> List[Text]:
+        """
+        This task provides fields mirrored from referenced task.
+
+        Returns:
+            Same to referenced task.
+        """
+        return self._provide
+
+    def remove(self) -> List[Text]:
+        """
+        This task removes fields mirrored from referenced task.
+
+        Returns:
+            Same to referenced task.
+        """
+        return self._remove
+
+
+class ForkTask(_ContainerTask, ProfileMixin):
     """
+    <b>waterch.tasker.tasks.containers.ForkTask</b>
+
     The container task contains same tasks with different profiles.
 
     Provided fields in `shared` will be forked to multiple fields.
@@ -223,39 +286,19 @@ class ForkTask(Task):
         ```
     """
 
-    class ExitSignal(Exception):
-        pass
-
-    def __init__(self):
-        super(ForkTask, self).__init__()
-        self._require = []
-        self._provide = []
-
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
-        def invoke_check(task, profile, shared, logger) -> int:
-            state = task.invoke(profile, shared, logger)
-            if state & Return.WRITE.value:
-                shared.dump()
-            if state & Return.READ.value:
-                shared.load()
-            if state & Return.EXIT.value:
-                print('Stopped by task.')
-                raise self.ExitSignal
-            return state
-
         def execute(meta):
             task_cls = import_reference(profile.reference)
             task = task_cls()
-            self._require.extend(task.require())
-            self._provide.extend(task.provide())
-            task_logger_name = f'{meta.reference}[{hex(hash(task))}]@{hex(hash(self))}'
+            self._register_task(task)
+            task_logger_name = f'{profile.reference}[{hex(hash(task))}]@{hex(hash(self))}'
             task_logger = get_logger(task_logger_name)
             task_shared = ForkStorageView(storage=shared.storage(), task=task)
             if meta.include:
                 task_profile = Profile.from_toml(filename=meta.path)
             else:
                 task_profile = profile[meta.profile]
-            state = invoke_check(task, task_profile, task_shared, task_logger)
+            state = self._invoke_check(task, task_profile, task_shared, task_logger)
             return \
                 state, \
                 task, \
@@ -263,7 +306,7 @@ class ForkTask(Task):
 
         def retry(state: int, task, context):
             if state | Return.RETRY.value:
-                return invoke_check(task, *context), task, context
+                return self._invoke_check(task, *context), task, context
             else:
                 return state, task, context
 
@@ -292,24 +335,6 @@ class ForkTask(Task):
 
         pool.close()
         return Return.SUCCESS.value
-
-    def require(self) -> List[Text]:
-        """
-        This task requires fields mirrored from referenced task.
-
-        Returns:
-            Same to referenced task.
-        """
-        return self._require
-
-    def provide(self) -> List[Text]:
-        """
-        This task provides fields mirrored from referenced task.
-
-        Returns:
-            Same to referenced task.
-        """
-        return self._provide
 
     @classmethod
     def define(cls) -> List[Definition]:
@@ -342,15 +367,103 @@ class ForkTask(Task):
             ])
         ]
 
-    def remove(self) -> List[Text]:
+
+class MapTask(_ContainerTask, ProfileMixin):
+    """
+    <b>waterch.tasker.tasks.containers.MapTask</b>
+
+    The container task mapping forked shared data to new fields in `shared` storage.
+
+    Provided fields in `shared` will be mapped to new fields.
+    You can also combine fields into dependent single field by a
+    ['ReduceTask' instance][waterch.tasker.tasks.containers.ReduceTask]
+    """
+    STORAGE_VIEW_CLASS = MapStorageView
+
+    def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        def execute(idx: Text):
+            task = task_cls()
+            self._register_task(task)
+            task_storage = self.STORAGE_VIEW_CLASS(storage=shared.storage(), task=task, mirror=idx)
+            task_logger_name = f'{profile.reference}[{hex(hash(task))}]@{hex(hash(self))}'
+            task_logger = get_logger(task_logger_name)
+            return self._invoke_check(task, task_profile, task_storage, task_logger), task, (
+                task_profile, task_storage, task_logger
+            )
+
+        def retry(state, task, context):
+            if state & Return.RETRY.value:
+                return self._invoke_check(task, *context), task, context
+            else:
+                return state, task, context
+
+        task_cls = import_reference(profile.reference)
+        pool = Pool(profile.worker)
+        if profile.include:
+            task_profile = Profile.from_toml(profile.path)
+        else:
+            task_profile = profile[profile.profile]
+        state_map = tuple(pool.map(
+            func=execute,
+            iterable=shared[self.STORAGE_VIEW_CLASS.META_KEY],
+            chunksize=int(len(shared[self.STORAGE_VIEW_CLASS.META_KEY]) // profile.worker)
+        ))
+        while reduce(lambda t, s: t | s[0], state_map, Return.SUCCESS.value) & Return.RETRY.value:
+            state_map = tuple(pool.map(
+                func=retry,
+                iterable=shared[self.STORAGE_VIEW_CLASS.META_KEY],
+                chunksize=int(len(shared[self.STORAGE_VIEW_CLASS.META_KEY]) // profile.worker)
+            ))
+        return reduce(lambda t, s: t | s[0], state_map, Return.SUCCESS.value)
+
+    @classmethod
+    def define(cls) -> List[Definition]:
         """
-        This task removes fields mirrored from referenced task.
+        Examples:
+            ```toml
+            __schema__ = "waterch.tasker.tasks.containers.MapTask"
+            worker = 0
+            reference = ""
+            include = true
+            path = ""
+            profile = ""
+            ```
 
         Returns:
-            Same to referenced task.
+            Schema of profile
         """
-        return []
+        return [
+            value('worker', int),
+            value('reference', str),
+            value('include', bool),
+            value('path', str),
+            value('profile', str),
+        ]
 
 
-class MapTask(Task):
-    pass
+class ReduceTask(MapTask):
+    """
+    <b>waterch.tasker.tasks.containers.ReduceTask</b>
+
+    The container task reduce sequenced fields in shared data into single dependent field.
+
+    You can reuse the key of sequenced fields when writing.
+    """
+    STORAGE_VIEW_CLASS = ReduceStorageView
+
+    def define(cls) -> List[Definition]:
+        """
+        Examples:
+            ```toml
+            __schema__ = "waterch.tasker.tasks.containers.ReduceTask"
+            worker = 0
+            reference = ""
+            include = true
+            path = ""
+            profile = ""
+            ```
+
+        Returns:
+            Schema of profile
+        """
+        return super(ReduceTask, cls).define()
