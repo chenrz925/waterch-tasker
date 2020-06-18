@@ -1,1 +1,1 @@
-from .task import TaskTestCase
+from .tasks import TaskTestCase
