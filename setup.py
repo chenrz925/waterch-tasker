@@ -1,10 +1,3 @@
-import pip
-import sys
-
-pip.main(['install', '--upgrade', 'setuptools', 'wheel', 'twine'])
-pip.main(['install', '-r', 'requirements.txt'])
-sys.path.append('src')
-
 from setuptools import setup, find_namespace_packages
 from datetime import datetime
 import waterch.tasker
