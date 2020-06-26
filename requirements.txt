@@ -1,5 +1,6 @@
 python-box>=4.2.3
 toml>=0.10.1
 more-itertools>=8.3.0
-torch>=1.5.1
 pytorch-ignite>=0.3.0
+# Please manually install the following modules.
+# torch>=1.5.1
