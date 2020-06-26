@@ -131,3 +131,6 @@ dmypy.json
 # Project ignore
 configs/
 templates/
+
+# Examples ignore
+examples/datasets
