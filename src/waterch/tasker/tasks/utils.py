@@ -151,6 +151,7 @@ class SetEnvironmentTask(Task):
     def remove(self) -> List[Text]:
         """
         This task removes nothing.
+
         Returns:
             Nothing
         """

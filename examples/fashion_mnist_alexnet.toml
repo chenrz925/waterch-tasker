@@ -1,0 +1,47 @@
+__schema__ = "waterch.tasker.launcher.Launcher"
+__name__ = "MNIST AlexNet Example"
+__author__ = "Chen Runze"
+__version__ = "0.0.1"
+__email__ = "chenrz925@icloud.com"
+__abstract__ = "This profile is used to test the torch module in waterch.tasker.tasks."
+
+[[__meta__]]
+reference = "cifar_loader.CIFARDataLoaderTask"
+include = false
+path = ""
+profile = "loader"
+execute = true
+
+[[__meta__]]
+reference = "conv_train.ConvTrainTask"
+include = false
+path = ""
+profile = "train"
+execute = true
+
+[__setting__]
+    [__setting__.storage]
+    reference = "waterch.tasker.storage.DictStorage"
+    [__setting__.log]
+    stdout = true
+    level = "INFO"
+
+[loader]
+batch_size = 1024
+
+[train]
+device = "cpu"
+non_blocking = true
+max_epochs = 100
+store_name = ""
+    [train.data_loader]
+    train = "train_loader"
+    validate = "validate_loader"
+    [train.optimizer]
+    reference = "torch.optim.AdamW"
+        [train.optimizer.kwargs]
+        lr = 1e-3
+    [train.loss]
+    reference = "torch.nn.CrossEntropyLoss"
+        [train.loss.kwargs]
+    [train.model]

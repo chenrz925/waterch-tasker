@@ -60,7 +60,7 @@ class ProfileMixin(metaclass=ABCMeta):
             elif definition.type == bool:
                 return definition.name, True
             elif definition.type == list or definition.type == tuple:
-                if len(definition.children) > 0:
+                if definition.children is not None and len(definition.children) > 0:
                     if isinstance(definition.children[0], Definition):
                         return definition.name, dict(map(closure, definition.children))
                     elif isinstance(definition.children[0], list) or isinstance(definition.children[0], tuple):
@@ -73,7 +73,7 @@ class ProfileMixin(metaclass=ABCMeta):
                 return '_', None
 
         class_str = str(cls)
-        schema = class_str[slice(*re_match(r'.*\'([a-zA-Z.]+)\'.*', class_str).regs[-1])]
+        schema = class_str[slice(*re_match(r'.*\'([a-zA-Z._]+)\'.*', class_str).regs[-1])]
         template = OrderedDict({'__schema__': schema})
         template.update(filter(lambda it: it[0] != '_' and it[1] != [], map(closure, cls.define())))
         return template

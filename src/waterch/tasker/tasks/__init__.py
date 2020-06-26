@@ -2,8 +2,8 @@ __all__ = [
     'Task',
     'ForkTask',
     'utils',
-    'test'
+    'torch'
 ]
 
-from waterch.tasker.tasks import utils, test
+from waterch.tasker.tasks import utils, torch
 from waterch.tasker.tasks.containers import Task, ForkTask
