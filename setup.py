@@ -5,7 +5,7 @@ from setuptools import setup, find_namespace_packages
 
 def get_version():
     with open('./src/waterch/tasker/_version.py', 'r') as fp:
-        return fp.readlines()[0].split('=')[1].strip(' \'\"')
+        return fp.readlines()[0].split('=')[1].strip(' \'\"\n\r')
 
 
 raw_version = get_version()
