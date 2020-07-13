@@ -248,7 +248,7 @@ class ForkTask(_ContainerTask, ProfileMixin):
 
     Provided fields in `shared` will be forked to multiple fields.
     To process them, you should execute a [`MapTask` instance][waterch.tasker.tasks.containers.MapTask]
-    or a ['ReduceTask' instance][waterch.tasker.tasks.containers.ReduceTask].
+    or a [`ReduceTask` instance][waterch.tasker.tasks.containers.ReduceTask].
 
     Examples:
         You can execute a `ForkTask` using a profile file just like the following one.

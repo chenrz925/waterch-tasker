@@ -9,12 +9,13 @@ from waterch.tasker.storage import Storage
 from waterch.tasker.tasks.containers import Task
 from waterch.tasker.typedef import Definition, Profile
 from waterch.tasker.typedef import Return
-from waterch.tasker.utils import import_reference
+from waterch.tasker.utils import import_reference, extract_reference
 
 try:
     import torch
     from torch import nn
     from torch import optim
+    from torch.utils import data
     from ignite import engine
     from ignite import metrics
 except ImportError as ie:
@@ -36,6 +37,12 @@ class TrainTask(Task, metaclass=ABCMeta):
     your development.
     """
 
+    def __init__(self, prefix: Text = None):
+        if prefix is not None:
+            self.PROVIDE_KEY = f'{prefix}_model'
+        else:
+            self.PROVIDE_KEY = 'model'
+
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
         train_loader = shared['train_loader']
         validate_loader = shared['validate_loader']
@@ -55,7 +62,7 @@ class TrainTask(Task, metaclass=ABCMeta):
         self.more_metrics(metrics_dict)
 
         def prepare_batch(batch, device=None, non_blocking=False):
-            return deepcopy(self.prepare_batch(deepcopy(batch), device, non_blocking))
+            return self.prepare_batch(deepcopy(batch), device, non_blocking)
 
         trainer = engine.create_supervised_trainer(
             model, optimizer, loss,
@@ -121,7 +128,7 @@ class TrainTask(Task, metaclass=ABCMeta):
         Returns:
             "model"
         """
-        return ['model']
+        return [self.PROVIDE_KEY]
 
     def remove(self) -> List[Text]:
         """
@@ -291,7 +298,8 @@ class TrainTask(Task, metaclass=ABCMeta):
         """
         pass
 
-    def on_epoch_completed(self, engine_: engine.Engine, metrics_: Dict[Text, Any], profile: Profile, shared: Storage, logger: Logger):
+    def on_epoch_completed(self, engine_: engine.Engine, metrics_: Dict[Text, Any], profile: Profile, shared: Storage,
+                           logger: Logger):
         """
         Define the actions when an epoch completed.
 
@@ -467,4 +475,70 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
         epoch_iteration = engine_.state.iteration % engine_.state.epoch_length
         if epoch_iteration == 0:
             epoch_iteration = engine_.state.epoch_length
-        logger.info(f'ITERATION {epoch_iteration} | output: {engine_.state.output}')
+        logger.debug(f'ITERATION {epoch_iteration} | output: {engine_.state.output}')
+
+
+class DataLoaderTask(Task):
+    """
+    <b>waterch.tasker.tasks.torch.DataLoaderTask</b>
+
+    The fundamental task construction to provide data loaders.
+
+
+    """
+
+    def __init__(self, _type: Text = None):
+        if _type is None:
+            self.PROVIDE_KEY = 'loader'
+        else:
+            self.PROVIDE_KEY = f'{_type}_loader'
+
+    def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        if profile.dataset.simple:
+            reference, rparams = extract_reference(profile.dataset.reference)
+            dataset_cls = import_reference(reference)
+            dataset = dataset_cls(*rparams, **profile.dataset.kwargs)
+        else:
+            dataset = self.create_dataset(profile.dataset.kwargs, shared, logger)
+
+        assert isinstance(dataset, data.Dataset)
+
+        loader_params = dict(profile.loader)
+        loader_params['dataset'] = dataset
+        shared[self.PROVIDE_KEY] = data.DataLoader(**loader_params)
+        return Return.SUCCESS.value
+
+    def require(self) -> List[Text]:
+        return []
+
+    def provide(self) -> List[Text]:
+        return [self.PROVIDE_KEY]
+
+    def remove(self) -> List[Text]:
+        return []
+
+    @classmethod
+    def define(cls) -> List[Definition]:
+        return [
+            value('dataset', list, [
+                value('simple', bool),
+                value('reference', str),
+                value('kwargs', list, cls.define_dataset())
+            ]),
+            value('loader', list, [
+                value('batch_size', int),
+                value('shuffle', bool),
+                value('num_workers', int),
+                value('pin_memory', bool),
+                value('drop_last', bool),
+            ])
+        ]
+
+    @abstractmethod
+    def create_dataset(self, profile: Profile, shared: Storage, logger: Logger):
+        raise NotImplementedError('Please create the dataset in create_dataset if dataset.simple is False')
+
+    @classmethod
+    @abstractmethod
+    def define_dataset(cls):
+        return []

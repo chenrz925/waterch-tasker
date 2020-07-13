@@ -1,4 +1,4 @@
-from typing import Text, Type
+from typing import Text, Type, List, Tuple
 
 
 def import_reference(reference: Text) -> Type:
@@ -16,3 +16,8 @@ def import_reference(reference: Text) -> Type:
             return module
     else:
         raise RuntimeError(f'Wrong reference {reference}.')
+
+
+def extract_reference(reference: Text) -> Tuple[Text, List[Text]]:
+    reference_splits = reference.split(':')
+    return reference_splits[0], reference_splits[1:] if len(reference_splits) > 1 else []

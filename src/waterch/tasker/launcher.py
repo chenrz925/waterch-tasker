@@ -16,7 +16,7 @@ from waterch.tasker.mixin import ProfileMixin, value
 from waterch.tasker.storage import DictStorage, CommonStorageView
 from waterch.tasker.tasks import Task
 from waterch.tasker.typedef import Profile, Return, Definition
-from waterch.tasker.utils import import_reference
+from waterch.tasker.utils import import_reference, extract_reference
 from waterch.tasker._version import version
 
 
@@ -185,7 +185,8 @@ class Launcher(ProfileMixin):
         meta_index = 0
         while meta_index < len(profile.__meta__):
             meta = profile.__meta__[meta_index]
-            task_cls = import_reference(meta.reference)
+            reference, rparams = extract_reference(meta.reference)
+            task_cls = import_reference(reference)
             try:
                 if meta.include:
                     task_profile = Profile.from_toml(filename=meta.path)
@@ -195,8 +196,8 @@ class Launcher(ProfileMixin):
                 print('Failed to access task profile, stop running.')
                 shared.dump()
                 break
-            task: Task = task_cls()
-            task_display = f'{meta.reference}[{hex(hash(task))}]'
+            task: Task = task_cls(*rparams)
+            task_display = f'{reference}[{hex(hash(task))}]'
             task_logger = get_logger(task_display)
             print(task_display)
             print(f'require: {" ".join(task.require())}')

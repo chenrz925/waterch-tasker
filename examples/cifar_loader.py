@@ -8,32 +8,16 @@ from waterch.tasker.mixin import value
 from waterch.tasker.typedef import Definition, Profile
 from waterch.tasker.storage import Storage
 from waterch.tasker.tasks import Task
+from waterch.tasker.tasks.torch import DataLoaderTask
 from waterch.tasker.typedef import Return
 
 
-class CIFARDataLoaderTask(Task):
-    def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
-        shared['train_loader'] = DataLoader(
-            datasets.CIFAR100('datasets', download=True, transform=transforms.ToTensor()),
-            batch_size=profile.batch_size,
-        )
-        shared['validate_loader'] = DataLoader(
-            datasets.CIFAR100('datasets', train=True, download=True, transform=transforms.ToTensor()),
-            batch_size=profile.batch_size
-        )
-        return Return.SUCCESS.value
-
-    def require(self) -> List[Text]:
-        return []
-
-    def provide(self) -> List[Text]:
-        return ['train_loader', 'validate_loader']
-
-    def remove(self) -> List[Text]:
-        return []
+class CIFARDataLoaderTask(DataLoaderTask):
+    def create_dataset(self, profile: Profile, shared: Storage, logger: Logger):
+        return datasets.CIFAR100('datasets', transform=transforms.ToTensor())
 
     @classmethod
-    def define(cls) -> List[Definition]:
+    def define_dataset(cls):
         return [
-            value('batch_size', int),
+            value('train', bool)
         ]

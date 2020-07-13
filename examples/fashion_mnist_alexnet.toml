@@ -6,14 +6,22 @@ __email__ = "chenrz925@icloud.com"
 __abstract__ = "This profile is used to test the torch module in waterch.tasker.tasks."
 
 [[__meta__]]
-reference = "cifar_loader.CIFARDataLoaderTask"
+reference = "cifar_loader.CIFARDataLoaderTask:train"
 include = false
 path = ""
-profile = "loader"
+profile = "train_loader"
+execute = true
+
+
+[[__meta__]]
+reference = "cifar_loader.CIFARDataLoaderTask:validate"
+include = false
+path = ""
+profile = "validate_loader"
 execute = true
 
 [[__meta__]]
-reference = "conv_train.ConvTrainTask"
+reference = "conv_train.ConvTrainTask:train"
 include = false
 path = ""
 profile = "train"
@@ -24,10 +32,35 @@ execute = true
     reference = "waterch.tasker.storage.DictStorage"
     [__setting__.log]
     stdout = true
-    level = "INFO"
+    level = "DEBUG"
 
-[loader]
-batch_size = 1024
+[train_loader]
+    [train_loader.dataset]
+    simple = false
+    reference = ""
+        [train_loader.dataset.kwargs]
+        train = true
+
+    [train_loader.loader]
+    batch_size = 1024
+    shuffle = true
+    num_workers = 2
+    pin_memory = false
+    drop_last = true
+
+[validate_loader]
+    [validate_loader.dataset]
+    simple = false
+    reference = ""
+        [validate_loader.dataset.kwargs]
+        train = false
+
+    [validate_loader.loader]
+    batch_size = 1024
+    shuffle = true
+    num_workers = 2
+    pin_memory = false
+    drop_last = true
 
 [train]
 device = "cpu"
