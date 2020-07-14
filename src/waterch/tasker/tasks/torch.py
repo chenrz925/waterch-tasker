@@ -9,7 +9,7 @@ from waterch.tasker.storage import Storage
 from waterch.tasker.tasks.containers import Task
 from waterch.tasker.typedef import Definition, Profile
 from waterch.tasker.typedef import Return
-from waterch.tasker.utils import import_reference, extract_reference
+from waterch.tasker.utils import import_reference
 
 try:
     import torch
@@ -156,9 +156,6 @@ class TrainTask(Task, metaclass=ABCMeta):
         [loss]
         # You must implement define_optimizer to define the profile of the loss function.
         ```
-
-        Returns:
-
         """
         return [
             value('model', list, cls.define_model()),
@@ -380,7 +377,7 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
     """
     <b>waterch.tasker.tasks.torch.SimpleTrainTask</b>
 
-    A easy to use base class of task for training models. You don't need to modify the code
+    An easy to use base class of task for training models. You don't need to modify the code
     to create optimizer and loss function, instead, you only need to implement the model.
     """
 
@@ -484,7 +481,27 @@ class DataLoaderTask(Task):
 
     The fundamental task construction to provide data loaders.
 
+    Please declare the prefix of data loader in shared storage in reference
+    field of meta definitions.
 
+    Examples:
+        ```toml
+        # Data loader of validation.
+        [[__meta__]]
+        reference = "cifar_loader.CIFARDataLoaderTask:validate"
+        include = false
+        path = ""
+        profile = "validate_loader"
+        execute = true
+
+        # Data Loader of training.
+        [[__meta__]]
+        reference = "conv_train.ConvTrainTask:train"
+        include = false
+        path = ""
+        profile = "train"
+        execute = true
+        ```
     """
 
     def __init__(self, _type: Text = None):
@@ -494,17 +511,21 @@ class DataLoaderTask(Task):
             self.PROVIDE_KEY = f'{_type}_loader'
 
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
-        if profile.dataset.simple:
-            reference, rparams = extract_reference(profile.dataset.reference)
-            dataset_cls = import_reference(reference)
-            dataset = dataset_cls(*rparams, **profile.dataset.kwargs)
-        else:
-            dataset = self.create_dataset(profile.dataset.kwargs, shared, logger)
+        dataset = self.create_dataset(profile.dataset, shared, logger)
 
         assert isinstance(dataset, data.Dataset)
 
         loader_params = dict(profile.loader)
         loader_params['dataset'] = dataset
+
+        assert profile.sampler_type in ('sampler', 'batch_sampler', 'none')
+
+        if profile.sampler_type != 'none':
+            loader_params[profile.sampler_type] = self.create_sampler(
+                dataset, profile.sampler_type == 'batch_sampler', profile.sampler,
+                shared, logger
+            )
+
         shared[self.PROVIDE_KEY] = data.DataLoader(**loader_params)
         return Return.SUCCESS.value
 
@@ -519,26 +540,107 @@ class DataLoaderTask(Task):
 
     @classmethod
     def define(cls) -> List[Definition]:
+        """
+        ```toml
+        __schema__ = "waterch.tasker.tasks.torch.DataLoaderTask"
+        sampler_type = ""
+
+        [loader]
+        batch_size = 0
+        shuffle = true
+        num_workers = 0
+        pin_memory = true
+        drop_last = true
+        ```
+        """
         return [
-            value('dataset', list, [
-                value('simple', bool),
-                value('reference', str),
-                value('kwargs', list, cls.define_dataset())
-            ]),
+            value('dataset', list, cls.define_dataset()),
             value('loader', list, [
                 value('batch_size', int),
                 value('shuffle', bool),
                 value('num_workers', int),
                 value('pin_memory', bool),
                 value('drop_last', bool),
-            ])
+            ]),
+            value('sampler_type', str),
+            value('sampler', list, cls.define_sampler())
         ]
 
     @abstractmethod
-    def create_dataset(self, profile: Profile, shared: Storage, logger: Logger):
-        raise NotImplementedError('Please create the dataset in create_dataset if dataset.simple is False')
+    def create_dataset(self, profile: Profile, shared: Storage, logger: Logger) -> data.Dataset:
+        """
+        The function to create dataset instance with defined profile.
+
+        Args:
+            profile: Runtime profile defined in TOML file of dataset.
+            shared: Shared storage in the whole lifecycle.
+            logger: The logger named with this Task.
+
+        Returns:
+            A new dataset instance.
+        """
+        raise NotImplementedError('Please create the dataset in create_dataset')
 
     @classmethod
     @abstractmethod
     def define_dataset(cls):
+        """
+        A profile template of dataset need to be implemented by user.
+
+        Returns:
+            Definition of dataset profile.
+        """
+        raise NotImplementedError('Please define the dataset profile in define_dataset')
+
+    @abstractmethod
+    def create_sampler(self, dataset: data.Dataset, batch_sampler: bool, profile: Profile, shared: Storage,
+                       logger: Logger):
+        """
+        The function to create sampler instance with defined profile.
+
+        Args:
+            dataset: The dataset instance need to be loaded.
+            batch_sampler: Whether to use batch_sampler.
+            profile: Runtime profile defined in TOML file of sampler or batch sampler.
+            shared: Shared storage in the whole lifecycle.
+            logger: The logger named with this Task.
+
+        Returns:
+            A new sampler or batch sampler instance.
+        """
+        if batch_sampler:
+            raise NotImplementedError('Please create the batch sampler in create_sampler')
+        else:
+            raise NotImplementedError('Please create the sampler in create_sampler')
+
+    @classmethod
+    @abstractmethod
+    def define_sampler(cls):
+        raise NotImplementedError('Please define the sampler or batch sampler profile in define_sampler')
+
+
+class SimpleDataLoaderTask(DataLoaderTask):
+    """
+    <b>waterch.tasker.tasks.torch.SimpleDataLoaderTask</b>
+
+    An easy to use base class of task for providing data loader. You can
+    create data loader only with reference of dataset and related profile.
+    """
+    def create_dataset(self, profile: Profile, shared: Storage, logger: Logger) -> data.Dataset:
+        dataset_cls = import_reference(profile.reference)
+        return dataset_cls(**profile.kwargs)
+
+    @classmethod
+    def define_dataset(cls):
+        return [
+            value('reference', str),
+            value('kwargs', list, [])
+        ]
+
+    def create_sampler(self, dataset: data.Dataset, batch_sampler: bool, profile: Profile, shared: Storage,
+                       logger: Logger):
+        return None
+
+    @classmethod
+    def define_sampler(cls):
         return []
