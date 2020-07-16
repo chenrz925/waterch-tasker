@@ -9,11 +9,10 @@ def get_version():
 
 
 raw_version = get_version()
-suffix = datetime.now().strftime('%Y%m%d%H%M')
 
 setup(
     name="waterch-tasker",
-    version=f"{raw_version}.{suffix}",
+    version=f"{raw_version}",
     packages=find_namespace_packages(where="src"),
     package_dir={"": "src"},
     # Project uses reStructuredText, so ensure that the docutils get
