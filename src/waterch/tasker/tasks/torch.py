@@ -64,14 +64,14 @@ class TrainTask(Task, metaclass=ABCMeta):
         def prepare_batch(batch, device=None, non_blocking=False):
             return self.prepare_batch(deepcopy(batch), device, non_blocking)
 
-        trainer = engine.create_supervised_trainer(
+        trainer = self.create_trainer(
             model, optimizer, loss,
             device=torch.device(profile.device),
             non_blocking=profile.non_blocking,
             prepare_batch=prepare_batch,
         )
 
-        evaluator = engine.create_supervised_evaluator(
+        evaluator = self.create_evaluator(
             model, metrics_dict,
             device=torch.device(profile.device),
             non_blocking=profile.non_blocking,
@@ -372,6 +372,16 @@ class TrainTask(Task, metaclass=ABCMeta):
         """
         pass
 
+    def create_trainer(self, model, optimizer, loss_fn, device, non_blocking, prepare_batch, output_transform):
+        return engine.create_supervised_trainer(
+            model, optimizer, loss_fn, device, non_blocking, prepare_batch, output_transform
+        )
+
+    def create_evaluator(self, model, metrics, device, non_blocking, prepare_batch, output_transform):
+        return engine.create_supervised_evaluator(
+            model, metrics, device, non_blocking, prepare_batch, output_transform
+        )
+
 
 class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
     """
@@ -626,6 +636,7 @@ class SimpleDataLoaderTask(DataLoaderTask):
     An easy to use base class of task for providing data loader. You can
     create data loader only with reference of dataset and related profile.
     """
+
     def create_dataset(self, profile: Profile, shared: Storage, logger: Logger) -> data.Dataset:
         dataset_cls = import_reference(profile.reference)
         return dataset_cls(**profile.kwargs)
