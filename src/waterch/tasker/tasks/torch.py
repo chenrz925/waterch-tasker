@@ -56,9 +56,7 @@ class TrainTask(Task, metaclass=ABCMeta):
             optimizer = optimizer_return
             scheduler = None
         loss = self.create_loss(profile.loss, shared, logger)
-        metrics_dict = OrderedDict(
-            loss=metrics.Loss(loss)
-        )
+        metrics_dict = OrderedDict()
         self.more_metrics(metrics_dict)
 
         def prepare_batch(batch, device=None, non_blocking=False):
