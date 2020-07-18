@@ -109,7 +109,7 @@ class TrainTask(Task, metaclass=ABCMeta):
             train_loader,
             max_epochs=profile.max_epochs
         )
-        shared['model'] = model
+        shared[self.PROVIDE_KEY] = model
         return Return.SUCCESS.value
 
     def require(self) -> List[Text]:
