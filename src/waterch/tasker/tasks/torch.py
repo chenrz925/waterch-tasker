@@ -372,12 +372,16 @@ class TrainTask(Task, metaclass=ABCMeta):
         """
         pass
 
-    def create_trainer(self, model, optimizer, loss_fn, device, non_blocking, prepare_batch, output_transform):
+    def create_trainer(
+            self, model, optimizer, loss_fn, device, non_blocking, prepare_batch, output_transform=lambda x, y, y_pred, loss: loss.item()
+    ):
         return engine.create_supervised_trainer(
             model, optimizer, loss_fn, device, non_blocking, prepare_batch, output_transform
         )
 
-    def create_evaluator(self, model, metrics, device, non_blocking, prepare_batch, output_transform):
+    def create_evaluator(
+            self, model, metrics, device, non_blocking, prepare_batch, output_transform=lambda x, y, y_pred: (y_pred, y,)
+    ):
         return engine.create_supervised_evaluator(
             model, metrics, device, non_blocking, prepare_batch, output_transform
         )
