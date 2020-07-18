@@ -460,7 +460,7 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
         """
         logger.info(f'EPOCH {engine_.state.epoch} | ' + ' | '.join(
             map(
-                lambda it: ': '.join(it),
+                lambda it: f'{it[0]}: {it[1]}',
                 metrics_.items()
             )
         ))
