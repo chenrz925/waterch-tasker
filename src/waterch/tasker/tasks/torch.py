@@ -100,7 +100,7 @@ class TrainTask(Task, metaclass=ABCMeta):
         def on_epoch_completed(engine_):
             evaluator.run(validate_loader)
             if scheduler is not None:
-                scheduler.step()
+                scheduler.step(engine_.state.output)
             return self.on_epoch_completed(engine_, evaluator.state.metrics, profile, shared, logger)
 
         trainer.run(
