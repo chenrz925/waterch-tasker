@@ -534,7 +534,7 @@ class DataLoaderTask(Task):
 
         if profile.sampler_type != 'none':
             loader_params[profile.sampler_type] = self.create_sampler(
-                dataset, profile.sampler_type == 'batch_sampler', profile.sampler,
+                dataset, profile.sampler_type == 'batch_sampler', profile.loader,
                 shared, logger
             )
 
