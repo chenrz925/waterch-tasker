@@ -537,6 +537,15 @@ class DataLoaderTask(Task):
                 dataset, profile.sampler_type == 'batch_sampler', profile.loader,
                 shared, logger
             )
+            if profile.sampler_type == 'batch_sampler':
+                if 'batch_size' in loader_params:
+                    loader_params.pop('batch_size')
+                if 'shuffle' in loader_params:
+                    loader_params.pop('shuffle')
+                if 'sampler' in loader_params:
+                    loader_params.pop('sampler')
+                if 'drop_last' in loader_params:
+                    loader_params.pop('drop_last')
 
         shared[self.PROVIDE_KEY] = data.DataLoader(**loader_params)
         return Return.SUCCESS.value
