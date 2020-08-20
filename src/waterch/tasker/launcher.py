@@ -187,6 +187,7 @@ class Launcher(ProfileMixin):
             meta = profile.__meta__[meta_index]
 
             if not meta.execute:
+                meta_index += 1
                 continue
 
             reference, rparams = extract_reference(meta.reference)
