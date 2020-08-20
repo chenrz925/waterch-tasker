@@ -185,6 +185,10 @@ class Launcher(ProfileMixin):
         meta_index = 0
         while meta_index < len(profile.__meta__):
             meta = profile.__meta__[meta_index]
+
+            if not meta.execute:
+                continue
+
             reference, rparams = extract_reference(meta.reference)
             task_cls = import_reference(reference)
             try:
