@@ -9,7 +9,7 @@ from collections import OrderedDict
 from re import match as re_match
 from typing import List, Tuple, Text, Any, Union, Dict, Type
 
-from waterch.tasker.typedef import Definition
+from tasker.typedef import Definition
 
 
 def value(name: Text, type: Type, children: Union[List, Tuple] = None) -> Definition:

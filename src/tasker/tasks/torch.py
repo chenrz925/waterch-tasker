@@ -4,12 +4,12 @@ from copy import deepcopy
 from logging import Logger
 from typing import List, Text, Tuple, Union, Dict, Any
 
-from waterch.tasker.mixin import value
-from waterch.tasker.storage import Storage
-from waterch.tasker.tasks.containers import Task
-from waterch.tasker.typedef import Definition, Profile
-from waterch.tasker.typedef import Return
-from waterch.tasker.utils import import_reference
+from tasker.mixin import value
+from tasker.storage import Storage
+from tasker.tasks.containers import Task
+from tasker.typedef import Definition, Profile
+from tasker.typedef import Return
+from tasker.utils import import_reference
 
 try:
     import torch

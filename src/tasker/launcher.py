@@ -5,19 +5,20 @@ __all__ = [
 
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
-from logging import getLogger as get_logger, basicConfig as basic_config
+from logging import getLogger as get_logger
+from logging.config import dictConfig as dict_config
 from os import makedirs, path, curdir
 from sys import stdout, stderr, path as syspath
 from typing import List
 
 from toml import dump as toml_dump
 
-from waterch.tasker.mixin import ProfileMixin, value
-from waterch.tasker.storage import DictStorage, CommonStorageView
-from waterch.tasker.tasks import Task
-from waterch.tasker.typedef import Profile, Return, Definition
-from waterch.tasker.utils import import_reference, extract_reference
-from waterch.tasker._version import version
+from tasker.mixin import ProfileMixin, value
+from tasker.storage import DictStorage, CommonStorageView
+from tasker.tasks import Task
+from tasker.typedef import Profile, Return, Definition
+from tasker.utils import import_reference, extract_reference
+from tasker._version import version
 
 
 class Launcher(ProfileMixin):
@@ -31,12 +32,10 @@ class Launcher(ProfileMixin):
             value('__abstract__', str),
             value('__setting__', list, [
                 value('storage', list, [
-                    value('reference', str)
+                    value('reference', str),
+                    value('kwargs', list)
                 ]),
-                value('log', list, [
-                    value('stdout', bool),
-                    value('level', str),
-                ])
+                value('log', list, [])
             ]),
             value('__meta__', list, [
                 [
@@ -134,6 +133,21 @@ class Launcher(ProfileMixin):
     def command_launch(self, namespace):
         slash_number = 20
         profile = Profile.from_toml(filename=namespace.file[0])
+        # Configure logging
+        log_datetime_format = '%Y-%m-%dT%H:%M:%S'
+        log_format = '%(process)d|%(thread)d|%(asctime)s|%(levelname)s|%(name)s> %(message)s'
+        log_config = {
+            'version': 1,
+            'formatters': {
+                'default': {
+                    'format': log_format,
+                    'datefmt': log_datetime_format
+                },
+            },
+            'handlers': profile.__setting__.log
+        }
+        dict_config(log_config)
+        logger = get_logger('tasker.launcher.Launcher')
         # Check the profile
         missing_key = list(
             map(
@@ -147,11 +161,17 @@ class Launcher(ProfileMixin):
             raise RuntimeError(f'Key {",".join(missing_key)} is/are missing.')
         # Print header info of profile
         print('-' * slash_number)
+        logger.debug('-' * slash_number)
         print(f'{profile.__name__} ({profile.__version__})')
+        logger.debug(f'{profile.__name__} ({profile.__version__})')
         print(f'Author: {profile.__author__}')
+        logger.debug(f'Author: {profile.__author__}')
         print(f'E-Mail: {profile.__email__}')
+        logger.debug(f'E-Mail: {profile.__email__}')
         print(profile.__abstract__)
+        logger.debug(profile.__abstract__)
         print('-' * slash_number)
+        logger.debug('-' * slash_number)
         print()
         # Create shared storage
         if '__setting__' in profile \
@@ -161,26 +181,12 @@ class Launcher(ProfileMixin):
                 storage_cls = import_reference(profile.__setting__.storage.reference)
             except RuntimeError:
                 print('Failed to get storage class, fall back to DictStorage.', file=stderr)
+                logger.warning('Failed to get storage class, fall back to DictStorage.', file=stderr)
                 storage_cls = DictStorage
         else:
             storage_cls = DictStorage
         shared = storage_cls(**profile.__setting__.storage)
-        # Configure logging
-        log_datetime_format = '%Y-%m-%dT%H:%M:%S'
-        log_format = '%(asctime)s|%(levelname)s|%(name)s> %(message)s'
-        if profile.__setting__.log.stdout:
-            basic_config(
-                stream=stdout,
-                level=profile.__setting__.log.level,
-                format=log_format,
-                datefmt=log_datetime_format,
-            )
-        else:
-            basic_config(
-                filename=f'logs/{datetime.now().strftime("%Y-%m-%dT%H:%M:%S.log")}',
-                format=log_format,
-                datefmt=log_datetime_format,
-            )
+        shared.load()
         # Launch tasks
         meta_index = 0
         while meta_index < len(profile.__meta__):
@@ -199,6 +205,7 @@ class Launcher(ProfileMixin):
                     task_profile = profile[meta.profile]
             except Exception:
                 print('Failed to access task profile, stop running.')
+                logger.error('Failed to access task profile, stop running.')
                 shared.dump()
                 break
             task: Task = task_cls(*rparams)
@@ -206,8 +213,11 @@ class Launcher(ProfileMixin):
             task_logger = get_logger(task_display)
             print(task_display)
             print(f'require: {" ".join(task.require())}')
+            logger.debug(f'require: {" ".join(task.require())}')
             print(f'provide: {" ".join(task.provide())}')
+            logger.debug(f'provide: {" ".join(task.provide())}')
             print(f'{"-" * (slash_number - 1)}>')
+            logger.debug(f'{"-" * (slash_number - 1)}>')
             start_time = datetime.now()
             user_kill = False
             try:
@@ -217,8 +227,10 @@ class Launcher(ProfileMixin):
                 user_kill = True
             end_time = datetime.now()
             print(f'<{"-" * (slash_number - 1)}')
+            logger.debug(f'<{"-" * (slash_number - 1)}')
             state_label = 'Failed' if state & Return.ERROR.value else 'Successfully finished'
             print(f'{state_label} in {(end_time - start_time).total_seconds()} seconds.')
+            logger.debug(f'{state_label} in {(end_time - start_time).total_seconds()} seconds.')
             print()
             if state & Return.WRITE.value:
                 shared.dump()
@@ -226,9 +238,11 @@ class Launcher(ProfileMixin):
                 shared.load()
             if state & Return.EXIT.value:
                 print('Stopped by task.')
+                logger.debug('Stopped by task.')
                 break
             if user_kill:
                 print('Stopped by user.')
+                logger.debug('Stopped by user.')
                 break
             if not (state & Return.RETRY.value):
                 meta_index += 1

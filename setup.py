@@ -4,7 +4,7 @@ from setuptools import setup, find_namespace_packages
 
 
 def get_version():
-    with open('./src/waterch/tasker/_version.py', 'r') as fp:
+    with open('src/tasker/_version.py', 'r') as fp:
         return fp.readlines()[0].split('=')[1].strip(' \'\"\n\r')
 
 
@@ -42,9 +42,15 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "waterch-tasker = waterch.tasker:launch",
+            "waterch-tasker = tasker:launch",
         ],
     },
     # could also include long_description, download_url, etc.
-    install_requires=open("requirements.txt").readlines()
+    install_requires=open("requirements.txt").readlines(),
+    extras_require={
+        "pytorch": [
+            "torch>=1.5.1",
+            "pytorch-ignite>=0.3.0"
+        ]
+    }
 )

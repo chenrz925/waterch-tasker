@@ -8,10 +8,10 @@ from logging import Logger, getLogger as get_logger
 from multiprocessing.dummy import Pool
 from typing import List, Text
 
-from waterch.tasker.mixin import ProfileMixin, value
-from waterch.tasker.storage import Storage, ForkStorageView, MapStorageView, ReduceStorageView
-from waterch.tasker.typedef import Definition, Return, Profile
-from waterch.tasker.utils import import_reference
+from tasker.mixin import ProfileMixin, value
+from tasker.storage import Storage, ForkStorageView, MapStorageView, ReduceStorageView
+from tasker.typedef import Definition, Return, Profile
+from tasker.utils import import_reference
 
 
 class Task(ProfileMixin, metaclass=ABCMeta):

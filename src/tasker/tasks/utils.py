@@ -4,10 +4,10 @@ from os import environ
 from typing import List, Text
 from uuid import uuid4
 
-from waterch.tasker.typedef import Definition, Profile, Return
-from waterch.tasker.mixin import value
-from waterch.tasker.storage import Storage
-from waterch.tasker.tasks.containers import Task
+from tasker.typedef import Definition, Profile, Return
+from tasker.mixin import value
+from tasker.storage import Storage
+from tasker.tasks.containers import Task
 
 
 class GenerateIdTask(Task):
