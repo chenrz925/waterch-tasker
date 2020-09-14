@@ -135,9 +135,11 @@ class Launcher(ProfileMixin):
         profile = Profile.from_toml(filename=namespace.file[0])
         # Configure logging
         log_datetime_format = '%Y-%m-%dT%H:%M:%S'
-        log_format = '%(process)d|%(thread)d|%(asctime)s|%(levelname)s|%(name)s> %(message)s'
+        log_format = '%(asctime)s|%(process)d|%(thread)d|%(levelname)s|%(name)s> %(message)s'
         if '__setting__' in profile \
             and 'log' in profile.__setting__:
+            handlers = profile.__setting__.log
+        else:
             handlers = {
                 'default': {
                     'class': 'logging.StreamHandler',
@@ -146,8 +148,6 @@ class Launcher(ProfileMixin):
                     'stream': 'ext://sys.stderr'
                 }
             }
-        else:
-            handlers = profile.__setting__.log
         log_config = {
             'version': 1,
             'formatters': {
