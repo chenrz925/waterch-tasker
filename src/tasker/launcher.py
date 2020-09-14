@@ -158,6 +158,7 @@ class Launcher(ProfileMixin):
             },
             'handlers': handlers,
             'root': {
+                'level': 'NOTSET',
                 'handlers': list(handlers.keys())
             }
         }
