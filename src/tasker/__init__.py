@@ -3,6 +3,7 @@ __all__ = [
     'Definition',
     'Return',
     'storage',
+    'storages',
     'mixin',
     'value',
     'include',
