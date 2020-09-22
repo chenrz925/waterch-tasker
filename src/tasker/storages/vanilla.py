@@ -3,7 +3,7 @@ from uuid import uuid4
 from datetime import datetime
 from pathlib import Path
 import pickle
-from os import remove, listdir
+from os import remove, listdir, makedirs
 
 
 class HardPickleStorage(Storage):
@@ -11,6 +11,10 @@ class HardPickleStorage(Storage):
         super(HardPickleStorage, self).__init__(**kwargs)
         self.id = f'{datetime.now().strftime("%Y%m%d%H%M%S")}-{uuid4().hex}' if 'id' not in kwargs else kwargs['id']
         self.storage_folder = Path('.tasker') / 'storage' / 'pickle' / self.id
+        try:
+            makedirs(self.storage_folder)
+        except Exception:
+            pass
 
     def __getitem__(self, item):
         with open(self.storage_folder / item, 'rb') as fp:
@@ -38,6 +42,10 @@ class SoftPickleStorage(Storage):
         super(SoftPickleStorage, self).__init__(**kwargs)
         self.id = f'{datetime.now().strftime("%Y%m%d%H%M%S")}-{uuid4().hex}' if 'id' not in kwargs else kwargs['id']
         self.storage_folder = Path('.tasker') / 'storage' / 'pickle' / self.id
+        try:
+            makedirs(self.storage_folder)
+        except Exception:
+            pass
         self.cache_dict = {}
 
     def __getitem__(self, item):

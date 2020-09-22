@@ -160,7 +160,8 @@ class Launcher(ProfileMixin):
             'root': {
                 'level': 'NOTSET',
                 'handlers': list(handlers.keys())
-            }
+            },
+            'incremental': True
         }
         dict_config(log_config)
         logger = get_logger('tasker.launcher.Launcher')
