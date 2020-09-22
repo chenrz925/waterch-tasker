@@ -1,6 +1,5 @@
 __all__ = [
-    'HardPickleStorage',
-    'SoftPickleStorage',
+    'vanilla',
 ]
 
-from tasker.storages.vanilla import *
+from tasker.storages import *
