@@ -103,11 +103,15 @@ class TrainTask(Task, metaclass=ABCMeta):
                 scheduler.step(engine_.state.output)
             return self.on_epoch_completed(engine_, evaluator.state.metrics, profile, shared, logger)
 
-        trainer.run(
-            train_loader,
-            max_epochs=profile.max_epochs
-        )
-        shared[self.PROVIDE_KEY] = model
+        try:
+            trainer.run(
+                train_loader,
+                max_epochs=profile.max_epochs
+            )
+        except Exception:
+            logger.info('Early stopped by certain reason.')
+        finally:
+            shared[self.PROVIDE_KEY] = model
         return Return.SUCCESS.value
 
     def require(self) -> List[Text]:
