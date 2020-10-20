@@ -179,6 +179,7 @@ class TrainTask(Task, metaclass=ABCMeta):
             value('model', list, cls.define_model()),
             value('optimizer', list, cls.define_optimizer()),
             value('loss', list, cls.define_loss()),
+            value('handlers', list, cls.define_handlers()),
             value('device', str),
             value('non_blocking', bool),
             value('max_epochs', int),
