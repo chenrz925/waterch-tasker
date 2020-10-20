@@ -1,8 +1,11 @@
+import pickle
 from abc import abstractmethod, ABCMeta
 from collections import OrderedDict
 from copy import deepcopy
 from logging import Logger
-from typing import List, Text, Tuple, Union, Dict, Any
+from typing import List, Text, Tuple, Union, Dict, Any, Callable
+from os import path, makedirs
+from datetime import datetime
 
 from tasker.mixin import value
 from tasker.storage import Storage
@@ -18,6 +21,8 @@ try:
     from torch.utils import data
     from ignite import engine
     from ignite import metrics
+    from ignite import handlers
+    from ignite.contrib import handlers as chandlers
 except ImportError as ie:
     raise RuntimeError('Tasks in this module needs pytorch and pytorch-ignite modules')
 
@@ -44,6 +49,7 @@ class TrainTask(Task, metaclass=ABCMeta):
             self.PROVIDE_KEY = 'model'
 
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        debug_mode = True if 'debug' not in profile else profile.debug
         train_loader = shared['train_loader']
         validate_loader = shared['validate_loader']
 
@@ -75,6 +81,13 @@ class TrainTask(Task, metaclass=ABCMeta):
             non_blocking=profile.non_blocking,
             prepare_batch=prepare_batch,
         )
+
+        handlers_ = self.attach_handlers(
+            trainer, evaluator, profile.handlers, shared, logger, model, profile.model.model, optimizer, metrics_dict
+        )
+
+        for handler in handlers_:
+            logger.debug(f'Handler {handler} registered.')
 
         @trainer.on(engine.Events.STARTED)
         def on_epoch_started(engine_):
@@ -108,8 +121,11 @@ class TrainTask(Task, metaclass=ABCMeta):
                 train_loader,
                 max_epochs=profile.max_epochs
             )
-        except Exception:
-            logger.info('Early stopped by certain reason.')
+        except Exception as e:
+            if debug_mode:
+                raise e
+            else:
+                logger.info('Early stopped by certain reason.')
         finally:
             shared[self.PROVIDE_KEY] = model
         return Return.SUCCESS.value
@@ -250,6 +266,31 @@ class TrainTask(Task, metaclass=ABCMeta):
         """
         raise NotImplementedError(f'Please define the loss function profile in define_loss')
 
+    @abstractmethod
+    def attach_handlers(
+            self, trainer: engine.Engine, evaluator: engine.Engine, profile: Profile, shared: Storage, logger: Logger,
+            model: nn.Module, model_profile: Profile, optimizer: optim.Optimizer,
+            metrics_: OrderedDict[Text, metrics.Metric]
+    ) -> List[Callable]:
+        """
+        The function to create handler objects of ignite engine with defined profile
+
+        Returns:
+            A list of handlers to control the train task.
+        """
+        raise NotImplementedError('Please create the handlers of trainer in create_handlers')
+
+    @classmethod
+    @abstractmethod
+    def define_handlers(cls):
+        """
+        A profile template of handlers need to be implemeted by user.
+
+        Returns:
+            Definition if handlers profile.
+        """
+        raise NotImplementedError(f'Please define the handlers profile in define_handlers')
+
     def more_metrics(self, metrics_: OrderedDict):
         """
         All metric method you want to monitor in training epochs.
@@ -375,14 +416,16 @@ class TrainTask(Task, metaclass=ABCMeta):
         pass
 
     def create_trainer(
-            self, model, optimizer, loss_fn, device, non_blocking, prepare_batch, output_transform=lambda x, y, y_pred, loss: loss.item()
+            self, model, optimizer, loss_fn, device, non_blocking, prepare_batch,
+            output_transform=lambda x, y, y_pred, loss: loss.item()
     ):
         return engine.create_supervised_trainer(
             model, optimizer, loss_fn, device, non_blocking, prepare_batch, output_transform
         )
 
     def create_evaluator(
-            self, model, metrics, device, non_blocking, prepare_batch, output_transform=lambda x, y, y_pred: (y_pred, y,)
+            self, model, metrics, device, non_blocking, prepare_batch,
+            output_transform=lambda x, y, y_pred: (y_pred, y,)
     ):
         return engine.create_supervised_evaluator(
             model, metrics, device, non_blocking, prepare_batch, output_transform
@@ -468,9 +511,183 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
             value('kwargs', list)
         ]
 
-    def on_epoch_completed(self,
-                           engine_: engine.Engine, metrics_: Dict[Text, Any], profile: Profile, shared: Storage,
-                           logger: Logger):
+    def attach_handlers(
+            self, trainer: engine.Engine, evaluator: engine.Engine, profile: Profile, shared: Storage, logger: Logger,
+            model: nn.Module, model_profile: Profile, optimizer: optim.Optimizer,
+            metrics_: OrderedDict[Text, metrics.Metric]
+    ) -> List[Callable]:
+        handlers_ = []
+        if 'checkpoint' in profile:
+            if 'dirname' in profile.checkpoint:
+                dirname = profile.checkpoint.dirname
+            else:
+                dirname = 'noname'
+            if not path.exists(path.join('.tasker', 'checkpoints')):
+                makedirs(path.join('.tasker', 'checkpoints'))
+            dirname = path.join('.tasker', 'checkpoints', dirname, f'{datetime.now().strftime("%Y%m%dT%H%M%S")}')
+
+            if 'score_function' in profile.checkpoint and profile.checkpoint.score_function.startswith('lambda'):
+                score_function = eval(profile.checkpoint.score_function)
+            else:
+                score_function = None
+
+            if 'filename_prefix' in profile.checkpoint:
+                filename_prefix = profile.checkpoint.filename_prefix
+            else:
+                filename_prefix = ''
+
+            if 'score_name' in profile.checkpoint:
+                score_name = profile.checkpoint.score_name
+            else:
+                score_name = None
+
+            save_handler = handlers.DiskSaver(
+                dirname=dirname,
+                atomic=True,
+                create_dir=True
+            )
+            checkpoint = handlers.Checkpoint(
+                to_save={
+                    'model': model,
+                    'profile': model_profile.to_dict()
+                },
+                save_handler=save_handler,
+                filename_prefix=filename_prefix,
+                score_function=score_function,
+                score_name=score_name,
+                filename_pattern='checkpoint_{filename_prefix}{score_name}={score}.{global_step}.{ext}',
+                global_step_transform=handlers.global_step_from_engine(trainer, engine.Events.EPOCH_COMPLETED)
+            )
+            evaluator.add_event_handler(engine.Events.COMPLETED, checkpoint)
+            handlers_.append(checkpoint)
+        if 'early_stopping' in profile:
+            assert 'patience' in profile.early_stopping
+            assert 'score_function' in profile.early_stopping and profile.early_stopping.score_function.startswith(
+                'lambda')
+
+            patience = profile.early_stopping.patience
+            score_function = eval(profile.early_stopping.score_function)
+            min_delta = profile.early_stopping.min_delta if 'min_delta' in profile.early_stopping else 0.0
+            cumulative_delta = profile.early_stopping.cumulative_delta if 'cumulative_delta' in profile.early_stopping else False
+
+            early_stopping = handlers.EarlyStopping(
+                patience=patience,
+                score_function=score_function,
+                trainer=trainer,
+                min_delta=min_delta,
+                cumulative_delta=cumulative_delta
+            )
+            evaluator.add_event_handler(engine.Events.COMPLETED, early_stopping)
+            handlers_.append(early_stopping)
+        if 'terminate_on_nan' in profile:
+            terminate = handlers.TerminateOnNan()
+            trainer.add_event_handler(engine.Events.COMPLETED, terminate)
+            handlers_.append(terminate)
+        if 'tensorboard' in profile:
+            dirname = profile.tensorboard.log_dir if 'dirname' in profile.tensorboard else 'noname'
+            log_dir = path.join('.tasker', 'tensorboard', dirname, f'{datetime.now().strftime("%Y%m%dT%H%M%S")}')
+            if not path.exists(log_dir):
+                makedirs(log_dir)
+            tensorboard_logger = chandlers.tensorboard_logger.TensorboardLogger(log_dir=log_dir)
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.GradsHistHandler(model, tag='grads_hist')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.GradsScalarHandler(model, torch.norm, tag='grads_norm')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.GradsScalarHandler(model, torch.std, tag='grads_std')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.GradsScalarHandler(model, torch.mean, tag='grads_mean')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.GradsScalarHandler(model, torch.norm, tag='grads_norm')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.OptimizerParamsHandler(
+                    optimizer,
+                    param_name='lr',
+                    tag='optimizer_lr'
+                )
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.WeightsHistHandler(model, 'weights_hist')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.WeightsScalarHandler(model, reduction=torch.std,
+                                                                              tag='weights_std')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.WeightsScalarHandler(model, reduction=torch.mean,
+                                                                              tag='weights_mean')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.WeightsScalarHandler(model, reduction=torch.norm,
+                                                                              tag='weights_norm')
+            )
+            tensorboard_logger.attach(
+                trainer,
+                event_name=engine.Events.ITERATION_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.OutputHandler(
+                    'train_loss'
+                )
+            )
+            tensorboard_logger.attach(
+                evaluator,
+                event_name=engine.Events.EPOCH_COMPLETED,
+                log_handler=chandlers.tensorboard_logger.OutputHandler(
+                    'validate_loss',
+                    metric_names=list(metrics_.keys())
+                )
+            )
+            handlers_.append(tensorboard_logger)
+        return handlers_
+
+    def define_handlers(cls):
+        return [
+            value('checkpoint', list, [
+                value('dirname', str),
+                value('score_function', str),
+                value('filename_prefix', str),
+                value('score_name', str)
+            ]),
+            value('early_stopping', list, [
+                value('patience', int),
+                value('score_function', str),
+                value('min_delta', float),
+                value('cumulative_delta', bool),
+            ]),
+            value('terminate_on_nan', list, []),
+            value('tensorboard', list, [
+                value('dirname', str),
+            ])
+        ]
+
+    def on_epoch_completed(
+            self,
+            engine_: engine.Engine, metrics_: Dict[Text, Any], profile: Profile, shared: Storage, logger: Logger
+    ):
         """
         Display metrics output of each epochs which declared in `more_metrics`.
         """
@@ -670,3 +887,28 @@ class SimpleDataLoaderTask(DataLoaderTask):
     @classmethod
     def define_sampler(cls):
         return []
+
+
+class DumpedModelTrainTask(SimpleTrainTask):
+    def create_model(self, profile: Profile, shared: Storage, logger: Logger) -> nn.Module:
+        assert 'path' in profile
+        path = profile.path
+
+        if 'mode' in profile:
+            mode = profile.mode
+        else:
+            mode = 'torch'
+        assert mode in ('torch', 'pickle')
+
+        if mode == 'torch':
+            return torch.load(path)
+        elif mode == 'pickle':
+            with open(path, 'rb') as fp:
+                return pickle.load(fp)
+
+    @classmethod
+    def define_model(cls):
+        return [
+            value('mode', str),
+            value('path', str)
+        ]
