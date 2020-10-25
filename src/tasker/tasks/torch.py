@@ -44,10 +44,17 @@ class TrainTask(Task, metaclass=ABCMeta):
             self.PROVIDE_KEY = 'model'
 
     def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        assert 'model' in profile
+        assert 'optimizer' in profile
+        assert 'loss' in profile
+        assert 'device' in profile
+        assert 'non_blocking' in profile
+        assert 'max_epochs' in profile
+
         train_loader = shared['train_loader']
         validate_loader = shared['validate_loader']
 
-        model = self.create_model(profile.model, shared, logger)
+        model = self.create_model(profile.model, shared, logger).to(torch.device(profile.device))
         optimizer_return = self.create_optimizer(model, profile.optimizer, shared, logger)
         if isinstance(optimizer_return, tuple):
             optimizer = optimizer_return[0]

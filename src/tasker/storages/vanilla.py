@@ -2,8 +2,16 @@ from tasker.storage import Storage
 from uuid import uuid4
 from datetime import datetime
 from pathlib import Path
+from sys import stderr
 import pickle
 from os import remove, listdir, makedirs
+
+try:
+    import torch
+    from torch import nn
+except ImportError as ie:
+    print('If certain keys saved by PyTorch, loading will cause runtime error.', file=stderr)
+    torch = None
 
 
 class HardPickleStorage(Storage):
@@ -18,11 +26,17 @@ class HardPickleStorage(Storage):
 
     def __getitem__(self, item):
         with open(self.storage_folder / item, 'rb') as fp:
-            return pickle.load(fp)
+            try:
+                return pickle.load(fp)
+            except pickle.UnpicklingError as ue:
+                return torch.load(fp)
 
     def __setitem__(self, key, value):
         with open(self.storage_folder / key, 'wb') as fp:
-            return pickle.dump(value, fp)
+            if isinstance(value, nn.Module) or isinstance(value, torch.Tensor):
+                return torch.save(value, fp)
+            else:
+                return pickle.dump(value, fp)
 
     def __delitem__(self, key):
         return remove(self.storage_folder / key)
