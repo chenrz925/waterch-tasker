@@ -66,13 +66,13 @@ class Launcher(ProfileMixin):
         )
         launch_parser = subcommands.add_parser(
             'launch',
-            help='launch tasks by a profile'
+            help='launch example_tasks by a profile'
         )
         launch_parser.add_argument(
             '-f', '--file',
             nargs=1,
             required=True,
-            help='launch tasks defined by this file'
+            help='launch example_tasks defined by this file'
         )
         template_parser = subcommands.add_parser(
             'template',
@@ -82,7 +82,7 @@ class Launcher(ProfileMixin):
             '-r', '--reference',
             nargs='+',
             required=True,
-            help='generate profile template of those tasks'
+            help='generate profile template of those example_tasks'
         )
         template_parser.add_argument(
             '-o', '--output',
@@ -203,7 +203,7 @@ class Launcher(ProfileMixin):
             storage_cls = DictStorage
         shared = storage_cls(**profile.__setting__.storage)
         shared.load()
-        # Launch tasks
+        # Launch example_tasks
         meta_index = 0
         while meta_index < len(profile.__meta__):
             meta = profile.__meta__[meta_index]

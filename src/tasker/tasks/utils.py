@@ -12,7 +12,7 @@ from tasker.tasks.containers import Task
 
 class GenerateIdTask(Task):
     """
-    <b>waterch.tasker.tasks.utils.GenerateIdTask</b>
+    <b>waterch.tasker.example_tasks.utils.GenerateIdTask</b>
 
     Task to generate ID.
     The task will declare a field named `id` in shared storage.
@@ -71,7 +71,7 @@ class GenerateIdTask(Task):
 
         | Key  | Value                                 |
         | ---- | ------------------------------------- |
-        | id   | Generated ID provided to other tasks. |
+        | id   | Generated ID provided to other example_tasks. |
 
         Returns:
             Only contains "id"
@@ -90,7 +90,7 @@ class GenerateIdTask(Task):
         """
         Examples:
             ```toml
-            __schema__ = "waterch.tasker.tasks.utils.GenerateIdTask"
+            __schema__ = "waterch.tasker.example_tasks.utils.GenerateIdTask"
             by = ""
             label = ""
             ```
@@ -106,7 +106,7 @@ class GenerateIdTask(Task):
 
 class SetEnvironmentTask(Task):
     """
-    <b>waterch.tasker.tasks.utils.SetEnvironmentTask</b>
+    <b>waterch.tasker.example_tasks.utils.SetEnvironmentTask</b>
 
     Task to set environment values.
     """
@@ -161,7 +161,7 @@ class SetEnvironmentTask(Task):
     def define(cls) -> List[Definition]:
         """
         ```toml
-        __schema__ = "waterch.tasker.tasks.utils.SetEnvironmentTask"
+        __schema__ = "waterch.tasker.example_tasks.utils.SetEnvironmentTask"
         env = [
             ["CUDA_VISIBLE_DEVICES", "0"],
         ]

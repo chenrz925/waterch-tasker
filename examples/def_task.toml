@@ -1,0 +1,31 @@
+__schema__ = "waterch.tasker.launcher.Launcher"
+__name__ = "Example for tasker.decorator.def_task"
+__author__ = "Chen Runze"
+__version__ = "1.0.0"
+__email__ = "chenrz925@bupt.edu.cn"
+__abstract__ = ""
+
+# ----- Global settings -----
+
+[__setting__]
+    [__setting__.storage]
+    reference = "waterch.tasker.storage.DictStorage"
+    [__setting__.log]
+        [__setting__.log.console]
+        class = 'logging.StreamHandler'
+        formatter = 'default'
+        level = 'INFO'
+        stream = 'ext://sys.stdout'
+
+# ----- Task metainfo -----
+
+[[__meta__]]
+reference = "example_tasks.def_task.print"
+include = false
+path = ""
+profile = "print"
+execute = true
+
+# ----- task profiles -----
+[print]
+text = 'Hello, def_task.'

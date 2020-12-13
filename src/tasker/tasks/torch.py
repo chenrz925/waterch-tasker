@@ -29,7 +29,7 @@ except ImportError as ie:
 
 class TrainTask(Task, metaclass=ABCMeta):
     """
-    <b>waterch.tasker.tasks.torch.TrainTask</b>
+    <b>waterch.tasker.example_tasks.torch.TrainTask</b>
 
     The fundamental task construction to train a PyTorch model by provided data loaders.
 
@@ -38,7 +38,7 @@ class TrainTask(Task, metaclass=ABCMeta):
     label in shared storage.
 
     However, many actions should be redefined by users when implementing `TrainTask`. You can
-    also implement [`SimpleTrainTask`][waterch.tasker.tasks.torch.SimpleTrainTask] to boost
+    also implement [`SimpleTrainTask`][waterch.tasker.example_tasks.torch.SimpleTrainTask] to boost
     your development.
     """
 
@@ -271,7 +271,7 @@ class TrainTask(Task, metaclass=ABCMeta):
     def attach_handlers(
             self, trainer: engine.Engine, evaluator: engine.Engine, profile: Profile, shared: Storage, logger: Logger,
             model: nn.Module, model_profile: Profile, optimizer: optim.Optimizer,
-            metrics_: OrderedDict[Text, metrics.Metric]
+            metrics_: Dict[Text, metrics.Metric]
     ) -> List[Callable]:
         """
         The function to create handler objects of ignite engine with defined profile
@@ -435,7 +435,7 @@ class TrainTask(Task, metaclass=ABCMeta):
 
 class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
     """
-    <b>waterch.tasker.tasks.torch.SimpleTrainTask</b>
+    <b>waterch.tasker.example_tasks.torch.SimpleTrainTask</b>
 
     An easy to use base class of task for training models. You don't need to modify the code
     to create optimizer and loss function, instead, you only need to implement the model.
@@ -515,7 +515,7 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
     def attach_handlers(
             self, trainer: engine.Engine, evaluator: engine.Engine, profile: Profile, shared: Storage, logger: Logger,
             model: nn.Module, model_profile: Profile, optimizer: optim.Optimizer,
-            metrics_: OrderedDict[Text, metrics.Metric]
+            metrics_: Dict[Text, metrics.Metric]
     ) -> List[Callable]:
         handlers_ = []
         if 'checkpoint' in profile:
@@ -711,7 +711,7 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
 
 class DataLoaderTask(Task):
     """
-    <b>waterch.tasker.tasks.torch.DataLoaderTask</b>
+    <b>waterch.tasker.example_tasks.torch.DataLoaderTask</b>
 
     The fundamental task construction to provide data loaders.
 
@@ -785,7 +785,7 @@ class DataLoaderTask(Task):
     def define(cls) -> List[Definition]:
         """
         ```toml
-        __schema__ = "waterch.tasker.tasks.torch.DataLoaderTask"
+        __schema__ = "waterch.tasker.example_tasks.torch.DataLoaderTask"
         sampler_type = ""
 
         [loader]
@@ -864,7 +864,7 @@ class DataLoaderTask(Task):
 
 class SimpleDataLoaderTask(DataLoaderTask):
     """
-    <b>waterch.tasker.tasks.torch.SimpleDataLoaderTask</b>
+    <b>waterch.tasker.example_tasks.torch.SimpleDataLoaderTask</b>
 
     An easy to use base class of task for providing data loader. You can
     create data loader only with reference of dataset and related profile.

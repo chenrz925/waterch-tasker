@@ -35,7 +35,7 @@ class Task(ProfileMixin, metaclass=ABCMeta):
 
         from waterch.tasker import Definition, Profile, Return, value
         from waterch.tasker.storage import Storage
-        from waterch.tasker.tasks import Task
+        from waterch.tasker.example_tasks import Task
 
 
         class ExampleTask(Task):
@@ -68,7 +68,7 @@ class Task(ProfileMixin, metaclass=ABCMeta):
         The profile is configured below named `example.toml`. When using `waterch-tasker`,
         a task must be configured with a profile file.
         You can create profile files separately using `include` feature, as well as
-        define action of all tasks in one profile file.
+        define action of all example_tasks in one profile file.
 
         ```toml
         __schema__ = "waterch.tasker.launcher.Launcher"
@@ -131,7 +131,7 @@ class Task(ProfileMixin, metaclass=ABCMeta):
         """
         All activities of a task defined in this method.
         You can access configurations from profile object,
-        access data from other tasks or provide data to other tasks by
+        access data from other example_tasks or provide data to other example_tasks by
         using shared. A logger is also provided with a task.
         Args:
             profile: Runtime profile defined in TOML file.
@@ -242,22 +242,22 @@ class _ContainerTask(Task, metaclass=ABCMeta):
 
 class ForkTask(_ContainerTask, ProfileMixin):
     """
-    <b>waterch.tasker.tasks.containers.ForkTask</b>
+    <b>waterch.tasker.example_tasks.containers.ForkTask</b>
 
-    The container task contains same tasks with different profiles.
+    The container task contains same example_tasks with different profiles.
 
     Provided fields in `shared` will be forked to multiple fields.
-    To process them, you should execute a [`MapTask` instance][waterch.tasker.tasks.containers.MapTask]
-    or a [`ReduceTask` instance][waterch.tasker.tasks.containers.ReduceTask].
+    To process them, you should execute a [`MapTask` instance][waterch.tasker.example_tasks.containers.MapTask]
+    or a [`ReduceTask` instance][waterch.tasker.example_tasks.containers.ReduceTask].
 
     Examples:
         You can execute a `ForkTask` using a profile file just like the following one.
         ```toml
-        __schema__ = "waterch.tasker.tasks.containers.ForkTask"
+        __schema__ = "waterch.tasker.example_tasks.containers.ForkTask"
         worker = 10
         reference = "example.ExampleTask"
 
-        [[tasks]]
+        [[example_tasks]]
         include = false
         path = ""
         profile = "task1"
@@ -266,7 +266,7 @@ class ForkTask(_ContainerTask, ProfileMixin):
         [task1]
         example = "Hello world 1"
 
-        [[tasks]]
+        [[example_tasks]]
         include = false
         path = ""
         profile = "task2"
@@ -275,7 +275,7 @@ class ForkTask(_ContainerTask, ProfileMixin):
         [task2]
         example = "Hello world 2"
 
-        [[tasks]]
+        [[example_tasks]]
         include = false
         path = ""
         profile = "task3"
@@ -341,10 +341,10 @@ class ForkTask(_ContainerTask, ProfileMixin):
         """
         Examples:
             ```toml
-            __schema__ = "waterch.tasker.tasks.containers.ForkTask"
+            __schema__ = "waterch.tasker.example_tasks.containers.ForkTask"
             worker = 0
             reference = ""
-            [[tasks]]
+            [[example_tasks]]
             include = true
             path = ""
             profile = ""
@@ -357,7 +357,7 @@ class ForkTask(_ContainerTask, ProfileMixin):
         return [
             value('worker', int),
             value('reference', str),
-            value('tasks', list, [
+            value('example_tasks', list, [
                 [
                     value('include', bool),
                     value('path', str),
@@ -370,13 +370,13 @@ class ForkTask(_ContainerTask, ProfileMixin):
 
 class MapTask(_ContainerTask, ProfileMixin):
     """
-    <b>waterch.tasker.tasks.containers.MapTask</b>
+    <b>waterch.tasker.example_tasks.containers.MapTask</b>
 
     The container task mapping forked shared data to new fields in `shared` storage.
 
     Provided fields in `shared` will be mapped to new fields.
     You can also combine fields into dependent single field by a
-    [`ReduceTask` instance][waterch.tasker.tasks.containers.ReduceTask]
+    [`ReduceTask` instance][waterch.tasker.example_tasks.containers.ReduceTask]
     """
     STORAGE_VIEW_CLASS = MapStorageView
 
@@ -421,7 +421,7 @@ class MapTask(_ContainerTask, ProfileMixin):
         """
         Examples:
             ```toml
-            __schema__ = "waterch.tasker.tasks.containers.MapTask"
+            __schema__ = "waterch.tasker.example_tasks.containers.MapTask"
             worker = 0
             reference = ""
             include = true
@@ -443,7 +443,7 @@ class MapTask(_ContainerTask, ProfileMixin):
 
 class ReduceTask(MapTask):
     """
-    <b>waterch.tasker.tasks.containers.ReduceTask</b>
+    <b>waterch.tasker.example_tasks.containers.ReduceTask</b>
 
     The container task reduce sequenced fields in shared data into single dependent field.
 
@@ -455,7 +455,7 @@ class ReduceTask(MapTask):
         """
         Examples:
             ```toml
-            __schema__ = "waterch.tasker.tasks.containers.ReduceTask"
+            __schema__ = "waterch.tasker.example_tasks.containers.ReduceTask"
             worker = 0
             reference = ""
             include = true
