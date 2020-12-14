@@ -83,7 +83,7 @@ class TrainTask(Task, metaclass=ABCMeta):
         )
 
         handlers_ = self.attach_handlers(
-            trainer, evaluator, profile.handlers, shared, logger, model, profile.model.model, optimizer, metrics_dict
+            trainer, evaluator, profile.handlers, shared, logger, model, profile.model, optimizer, metrics_dict
         )
 
         for handler in handlers_:
