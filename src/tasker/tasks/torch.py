@@ -585,7 +585,7 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
             trainer.add_event_handler(engine.Events.COMPLETED, terminate)
             handlers_.append(terminate)
         if 'tensorboard' in profile:
-            dirname = profile.tensorboard.log_dir if 'dirname' in profile.tensorboard else 'noname'
+            dirname = profile.tensorboard.dirname if 'dirname' in profile.tensorboard else 'noname'
             log_dir = path.join('.tasker', 'tensorboard', dirname, f'{datetime.now().strftime("%Y%m%dT%H%M%S")}')
             if not path.exists(log_dir):
                 makedirs(log_dir)
