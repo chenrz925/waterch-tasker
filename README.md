@@ -15,6 +15,12 @@ You can install waterch-tasker using `pip`.
 pip install waterch-tasker
 ```
 
+And if you want a more simple and robust version of waterch-tasker, please install v0.2.11.
+
+```bash
+pip install waterch-tasker==0.2.11
+```
+
 ## Usage
 
 When waterch-tasker is installed, please use `--help` command.
