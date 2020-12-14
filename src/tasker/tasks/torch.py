@@ -53,7 +53,8 @@ class TrainTask(Task, metaclass=ABCMeta):
         train_loader = shared['train_loader']
         validate_loader = shared['validate_loader']
 
-        model = self.create_model(profile.model, shared, logger)
+        model = self.create_model(profile.model, shared, logger).to(profile.device)
+
         optimizer_return = self.create_optimizer(model, profile.optimizer, shared, logger)
         if isinstance(optimizer_return, tuple):
             optimizer = optimizer_return[0]
@@ -652,7 +653,7 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
                 event_name=engine.Events.ITERATION_COMPLETED,
                 log_handler=chandlers.tensorboard_logger.OutputHandler(
                     'train_loss',
-                    output_transform=lambda x, y, y_pred, loss: loss.item()
+                    output_transform=lambda x: x,
                 )
             )
             tensorboard_logger.attach(
