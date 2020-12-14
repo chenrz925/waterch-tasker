@@ -651,7 +651,8 @@ class SimpleTrainTask(TrainTask, metaclass=ABCMeta):
                 trainer,
                 event_name=engine.Events.ITERATION_COMPLETED,
                 log_handler=chandlers.tensorboard_logger.OutputHandler(
-                    'train_loss'
+                    'train_loss',
+                    output_transform=lambda x, y, y_pred, loss: loss.item()
                 )
             )
             tensorboard_logger.attach(
