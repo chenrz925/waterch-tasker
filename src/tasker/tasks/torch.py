@@ -83,9 +83,10 @@ class TrainTask(Task, metaclass=ABCMeta):
             prepare_batch=prepare_batch,
         )
 
-        handlers_ = self.attach_handlers(
-            trainer, evaluator, profile.handlers, shared, logger, model, profile.model, optimizer, metrics_dict
-        )
+        if 'handlers' in profile:
+            handlers_ = self.attach_handlers(
+                trainer, evaluator, profile.handlers, shared, logger, model, profile.model, optimizer, metrics_dict
+            )
 
         for handler in handlers_:
             logger.debug(f'Handler {handler} registered.')
