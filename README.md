@@ -1,4 +1,4 @@
-# waterch-tasker
+# Tasker
 
 ![License](https://img.shields.io/github/license/chenrz925/waterch-tasker?style=flat-square)
 ![Last Commit](https://img.shields.io/github/last-commit/chenrz925/waterch-tasker?style=flat-square)
@@ -11,13 +11,13 @@ A scalable and extendable experiment task scheduler framework. [Documentation](h
 
 You can install waterch-tasker using `pip`.
 
-```bash
+```shell
 pip install waterch-tasker
 ```
 
 And if you want a more simple and robust version of waterch-tasker, please install v0.2.10.
 
-```bash
+```shell
 pip install waterch-tasker==0.2.10
 ```
 
@@ -25,7 +25,14 @@ pip install waterch-tasker==0.2.10
 
 When waterch-tasker is installed, please use `--help` command.
 
-```bash
+```shell
 waterch-tasker --help
 ```
+
+or
+
+```shell
+tasker --help
+```
+
 

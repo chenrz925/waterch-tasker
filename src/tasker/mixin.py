@@ -9,16 +9,16 @@ from collections import OrderedDict
 from re import match as re_match
 from typing import List, Tuple, Text, Any, Union, Dict, Type
 
-from tasker.typedef import Definition
+from .typedef import Definition
 
 
-def value(name: Text, type: Type, children: Union[List, Tuple] = None) -> Definition:
-    return Definition(name, type, children)
+def value(name: Text, type: Type, children: Union[List, Tuple] = None, default=None) -> Definition:
+    return Definition(name, type, children, default)
 
 
 def include(name: Text, cls: Type):
     if issubclass(cls, ProfileMixin):
-        return Definition(name, list, cls.define())
+        return Definition(name, list, cls.define(), None)
     else:
         raise RuntimeError(f'Class {cls} is NOT a ProfileMixin subclass')
 
@@ -74,6 +74,8 @@ class ProfileMixin(metaclass=ABCMeta):
 
         class_str = str(cls)
         schema = class_str[slice(*re_match(r'.*\'([a-zA-Z._]+)\'.*', class_str).regs[-1])]
+        if schema.startswith('abc.'):
+            schema = schema[4:]
         template = OrderedDict({'__schema__': schema})
         template.update(filter(lambda it: it[0] != '_' and it[1] != [], map(closure, cls.define())))
         return template

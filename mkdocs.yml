@@ -1,10 +1,15 @@
 site_name: waterch-tasker
 theme: material
-site_url: https://waterch-tasker.readthedocs.io/en/latest/
+site_url: https://tasker.waterch.cn/en/latest/
 nav:
   - Home: index.md
   - API:
       Tasks: api/tasks.md
+      Storages: api/storages.md
+      Decorators: api/decorators.md
+      Utilities: api/utilities.md
+  - Contribution API:
+      PyTorch: contrib/pytorch.md
 plugins:
   - search
   - mkdocstrings:
@@ -14,7 +19,7 @@ plugins:
           rendering:
             show_source: true
       watch:
-        - src/waterch/tasker
+        - src/tasker
 markdown_extensions:
   - admonition
   - codehilite:

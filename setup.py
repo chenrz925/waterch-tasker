@@ -43,14 +43,15 @@ setup(
     entry_points={
         "console_scripts": [
             "waterch-tasker = tasker:launch",
+            "tasker = tasker:launch",
         ],
     },
     # could also include long_description, download_url, etc.
     install_requires=open("requirements.txt").readlines(),
     extras_require={
         "pytorch": [
-            "torch>=1.5.1",
-            "pytorch-ignite>=0.3.0"
+            "torch>=1.7.1",
+            "pytorch-ignite>=0.4.3"
         ]
     }
 )

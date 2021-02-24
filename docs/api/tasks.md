@@ -1,7 +1,9 @@
 # Tasks
 
-::: waterch.tasker.tasks.containers
+## Container tasks
 
-::: waterch.tasker.tasks.utils
+::: tasker.tasks.containers
 
-::: waterch.tasker.tasks.torch
+## Utility tasks
+
+::: tasker.tasks.utils

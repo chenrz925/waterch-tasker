@@ -1,0 +1,119 @@
+__schema__ = "waterch.tasker.launcher.Launcher"
+__name__ = "Example for PyTorch tasks"
+__author__ = "Chen Runze"
+__version__ = "1.0.0"
+__email__ = "chenrz925@bupt.edu.cn"
+__abstract__ = ""
+
+# ----- Global settings -----
+
+[__setting__]
+[__setting__.storage]
+reference = "waterch.tasker.storages.basic.DictStorage$R"
+[__setting__.storage.kwargs]
+[__setting__.log]
+[__setting__.log.console]
+class = 'logging.StreamHandler'
+formatter = 'default'
+level = 'INFO'
+stream = 'ext://sys.stdout'
+[__setting__.log.file]
+class = 'logging.FileHandler'
+formatter = 'default'
+level = 'INFO'
+filename = 'example-pytorch.log'
+
+# ----- Task metainfo -----
+
+[[__meta__]]
+reference = 'tasker.tasks.utils.SetEnvironmentTask$T'
+profile = 'env'
+execute = true
+
+[[__meta__]]
+reference = "tasker.contrib.torch.SimpleDataLoaderTask$T$train"
+profile = "train_loader"
+execute = true
+
+[[__meta__]]
+reference = "tasker.contrib.torch.SimpleDataLoaderTask$T$validate"
+profile = "validate_loader"
+execute = true
+
+[[__meta__]]
+reference = "tasker.contrib.torch.SimpleTrainTask$T"
+profile = "train"
+execute = true
+
+# ----- Task profiles -----
+
+[env]
+"CUDA_VISIBLE_DEVICES" = "1"
+
+[train_loader]
+sampler_type = "none"
+[train_loader.dataset]
+reference = "torchvision.datasets.Places365$R"
+[train_loader.dataset.kwargs]
+root = "/public/lhy/crz/datasets/places365"
+split = 'val' # 'train-standard'
+download = false
+transform = "$M$torchvision.transforms.ToTensor"
+small = true
+[train_loader.loader]
+batch_size = 1024
+shuffle = true
+num_workers = 0
+pin_memory = false
+drop_last = false
+
+[validate_loader]
+sampler_type = "none"
+[validate_loader.dataset]
+reference = "torchvision.datasets.Places365$R"
+[validate_loader.dataset.kwargs]
+root = "/public/lhy/crz/datasets/places365"
+split = 'val'
+download = false
+transform = "$M$torchvision.transforms.ToTensor"
+small = true
+[validate_loader.loader]
+batch_size = 1024
+shuffle = true
+num_workers = 0
+pin_memory = false
+drop_last = false
+
+[train]
+device = 'cuda:0'
+non_blocking = true
+deterministic = false
+loss_display = 0.1
+[train.model]
+reference = 'torchvision.models.AlexNet$R'
+[train.model.kwargs]
+num_classes = 365
+[train.loss_function]
+reference = 'torch.nn.CrossEntropyLoss$R'
+[train.metrics]
+accuracy = '$M$ignite.metrics.Accuracy'
+mae = 'lambda it: (it[0].argmax(-1)\, it[1])$M$ignite.metrics.MeanAbsoluteError$X'
+mse = 'lambda it: (it[0].argmax(-1)\, it[1])$M$ignite.metrics.MeanSquaredError$X'
+rmse = 'lambda it: (it[0].argmax(-1)\, it[1])$M$ignite.metrics.RootMeanSquaredError$X'
+top1 = '1$M$ignite.metrics.TopKCategoricalAccuracy$I'
+top5 = '5$M$ignite.metrics.TopKCategoricalAccuracy$I'
+f1macro = '1$M$tasker.contrib.torch.FBetaMacro$I'
+[train.optimizer]
+reference = "torch.optim.AdamW$R"
+[train.optimizer.kwargs]
+lr = 1e-3
+[train.optimizer.scheduler]
+reference = 'torch.optim.lr_scheduler.ReduceLROnPlateau$R'
+[train.optimizer.scheduler.kwargs]
+patience = 5
+factor = 0.85
+verbose = true
+cooldown = 5
+threshold = 1e-7
+mode = "min"
+min_lr = 1e-5

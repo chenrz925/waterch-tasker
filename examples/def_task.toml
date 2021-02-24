@@ -9,7 +9,8 @@ __abstract__ = ""
 
 [__setting__]
     [__setting__.storage]
-    reference = "waterch.tasker.storage.DictStorage"
+    reference = "waterch.tasker.storages.basic.DictStorage$R"
+        [__setting__.storage.kwargs]
     [__setting__.log]
         [__setting__.log.console]
         class = 'logging.StreamHandler'
@@ -20,12 +21,23 @@ __abstract__ = ""
 # ----- Task metainfo -----
 
 [[__meta__]]
-reference = "example_tasks.def_task.print"
+reference = "example_tasks.def_task.environ$T"
 include = false
 path = ""
-profile = "print"
+profile = "print-0"
+execute = true
+
+[[__meta__]]
+reference = "example_tasks.def_task.print$T"
+include = false
+path = ""
+profile = "print-1"
 execute = true
 
 # ----- task profiles -----
-[print]
-text = 'Hello, def_task.'
+[print-0]
+TEST = 'TEST'
+EXAMPLE = '100000'
+
+[print-1]
+text = 'f"hello\,world {2020}"$X'

@@ -13,12 +13,12 @@ from typing import List
 
 from toml import dump as toml_dump
 
-from tasker.mixin import ProfileMixin, value
-from tasker.storage import DictStorage, CommonStorageView
-from tasker.tasks import Task
-from tasker.typedef import Profile, Return, Definition
-from tasker.utils import import_reference, extract_reference
-from tasker._version import version
+from ._version import version
+from .mixin import ProfileMixin, value
+from .storages.basic import DictStorage, CommonStorageView
+from .tasks import Task
+from .typedef import Profile, Return, Definition
+from .utils import import_reference, parse_profile
 
 
 class Launcher(ProfileMixin):
@@ -40,7 +40,6 @@ class Launcher(ProfileMixin):
             value('__meta__', list, [
                 [
                     value('reference', str),
-                    value('include', bool),
                     value('path', str),
                     value('profile', str),
                     value('execute', bool)
@@ -132,12 +131,13 @@ class Launcher(ProfileMixin):
 
     def command_launch(self, namespace):
         slash_number = 20
-        profile = Profile.from_toml(filename=namespace.file[0])
+        raw_profile = Profile.from_toml(filename=namespace.file[0])
+        profile = parse_profile(raw_profile)
         # Configure logging
-        log_datetime_format = '%Y-%m-%dT%H:%M:%S'
+        log_datetime_format = '%Y-%m-%dT%H:%M:%S%z'
         log_format = '%(asctime)s|%(process)d|%(thread)d|%(levelname)s|%(name)s> %(message)s'
         if '__setting__' in profile \
-            and 'log' in profile.__setting__:
+                and 'log' in profile.__setting__:
             handlers = profile.__setting__.log
         else:
             handlers = {
@@ -193,39 +193,36 @@ class Launcher(ProfileMixin):
         if '__setting__' in profile \
                 and 'storage' in profile.__setting__ \
                 and 'reference' in profile.__setting__.storage:
-            try:
-                storage_cls = import_reference(profile.__setting__.storage.reference)
-            except RuntimeError:
-                print('Failed to get storage class, fall back to DictStorage.', file=stderr)
-                logger.warning('Failed to get storage class, fall back to DictStorage.', file=stderr)
-                storage_cls = DictStorage
+            storage_cls = profile.__setting__.storage.reference
         else:
             storage_cls = DictStorage
-        shared = storage_cls(**profile.__setting__.storage)
+        if '__setting__' in profile \
+                and 'storage' in profile.__setting__ \
+                and 'kwargs' in profile.__setting__.storage:
+            shared = storage_cls(**profile.__setting__.storage.kwargs)
+        else:
+            shared = storage_cls()
         shared.load()
         # Launch example_tasks
         meta_index = 0
-        while meta_index < len(profile.__meta__):
+        while True:
+            if not meta_index < len(profile.__meta__):
+                break
             meta = profile.__meta__[meta_index]
+            raw_meta = raw_profile.__meta__[meta_index]
 
             if not meta.execute:
                 meta_index += 1
                 continue
 
-            reference, rparams = extract_reference(meta.reference)
-            task_cls = import_reference(reference)
-            try:
-                if meta.include:
-                    task_profile = Profile.from_toml(filename=meta.path)
-                else:
-                    task_profile = profile[meta.profile]
-            except Exception:
-                print('Failed to access task profile, stop running.')
-                logger.error('Failed to access task profile, stop running.')
-                shared.dump()
-                break
-            task: Task = task_cls(*rparams)
-            task_display = f'{reference}[{hex(hash(task))}]'
+            if isinstance(meta.profile, Profile):
+                task_profile = meta.profile
+                raw_task_profile = profile.from_toml(raw_meta.profile[:-2])
+            else:
+                task_profile = profile[meta.profile]
+                raw_task_profile = raw_profile[raw_meta.profile]
+            task: Task = meta.reference
+            task_display = f'{task.__class__.__name__}[{hex(hash(task))}]'
             task_logger = get_logger(task_display)
             print(task_display)
             print(f'require: {" ".join(task.require())}')
@@ -237,6 +234,12 @@ class Launcher(ProfileMixin):
             start_time = datetime.now()
             user_kill = False
             try:
+                task_logger.info('=' * slash_number)
+                try:
+                    task_logger.info('\n' + task_profile.to_toml())
+                except Exception:
+                    task_logger.info('\n' + raw_task_profile.to_toml())
+                task_logger.info('=' * slash_number)
                 state = task.invoke(task_profile, CommonStorageView(storage=shared, task=task), task_logger)
             except KeyboardInterrupt:
                 state = Return.WRITE.value
@@ -248,19 +251,21 @@ class Launcher(ProfileMixin):
             print(f'{state_label} in {(end_time - start_time).total_seconds()} seconds.')
             logger.debug(f'{state_label} in {(end_time - start_time).total_seconds()} seconds.')
             print()
-            if state & Return.WRITE.value:
+            if state & Return.WRITE:
                 shared.dump()
-            if state & Return.READ.value:
+            if state & Return.READ:
                 shared.load()
-            if state & Return.EXIT.value:
+            if state & Return.EXIT:
                 print('Stopped by task.')
                 logger.debug('Stopped by task.')
                 break
+            if state & Return.RELOAD:
+                profile = parse_profile(Profile.from_toml(filename=namespace.file[0]))
             if user_kill:
                 print('Stopped by user.')
                 logger.debug('Stopped by user.')
                 break
-            if not (state & Return.RETRY.value):
+            if not (state & Return.RETRY):
                 meta_index += 1
 
 

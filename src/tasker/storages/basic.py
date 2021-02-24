@@ -3,7 +3,9 @@ __all__ = [
     'DictStorage',
     'StorageView',
     'CommonStorageView',
-    'ForkStorageView'
+    'ForkStorageView',
+    'ReduceStorageView',
+    'MapStorageView',
 ]
 
 from abc import ABCMeta, abstractmethod
