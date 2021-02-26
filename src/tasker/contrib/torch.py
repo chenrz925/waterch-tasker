@@ -219,7 +219,7 @@ class TrainTask(Task):
     You need to run a task providing two data loaders named
     "train_loader" and "validate_loader" in shared storage
     before this task as well as the trained model will be
-    stored into "<something>_model" or "model" label in shared
+    stored into "\\<something\\>_model" or "model" label in shared
     storage.
 
     However, many actions should be redefined by user when
@@ -358,10 +358,10 @@ class TrainTask(Task):
 
     def provide(self) -> List[Text]:
         """
-        The task provides 1 item, including "model" or "<something>_model".
+        The task provides 1 item, including "model" or "\\<something\\>_model".
 
         Returns:
-            "model" or "<something>_model"
+            "model" or "\\<something\\>_model"
         """
         return [
             self._model_key
