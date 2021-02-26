@@ -2,7 +2,7 @@ from enum import Enum
 from logging import getLogger as get_logger
 from os import path, makedirs, environ
 from random import getrandbits
-from typing import Text, Type, List
+from typing import Text, Type, List, Callable
 
 from box import BoxError
 
@@ -50,6 +50,22 @@ class LocalPath(object):
             makedirs(absolute_path)
 
         return absolute_path
+
+
+class LambdaWrapper(object):
+    def __init__(self, expression):
+        self.expression = expression
+
+        try:
+            instance = eval(self.expression)
+        except Exception:
+            raise RuntimeError(f'Please check expression "{self.expression}"')
+
+        if not isinstance(instance, Callable):
+            raise RuntimeError(f'"{self.expression}" is not a lambda expression')
+
+    def __call__(self, *args, **kwargs):
+        return eval(self.expression)(*args, **kwargs)
 
 
 class FieldParser(object):
@@ -251,6 +267,22 @@ class FieldParser(object):
         """
         content = raw_sequences[0].replace(dollar_controller, '$').replace(comma_controller, ',')
         return eval(content)
+
+    def _parse_L(self, raw_sequences: List[Text], dollar_controller: Text, comma_controller: Text):
+        """
+        ```
+        <expression>$L
+        ```
+        Args:
+            raw_sequences:
+            dollar_controller:
+            comma_controller:
+
+        Returns:
+
+        """
+        content = raw_sequences[0].replace(dollar_controller, '$').replace(comma_controller, ',')
+        return LambdaWrapper(content)
 
     def __call__(self, *args, **kwargs):
         if len(args) > 1:

@@ -285,7 +285,7 @@ class TrainTask(Task):
             ))))
 
         @evaluator.on(engine.Events.COMPLETED)
-        def restore_model(_engine: engine.Engine):
+        def store_model(_engine: engine.Engine):
             if 'compare_metric' not in context:
                 context['compare_metric'] = float('-inf')
 
@@ -310,15 +310,19 @@ class TrainTask(Task):
                 metric_value = -metric_value
 
             if metric_value > context['compare_metric']:
+                context['compare_metric'] = metric_value
                 shared[self._model_key] = deepcopy(model.eval())
-                logger.info(f'Restored the model with {compare_by} of {metric_value}.')
+                logger.info(f'Stored the model with {compare_by} of {metric_value}.')
 
         @trainer.on(engine.Events.ITERATION_COMPLETED(
             every=int(len(train_loader) * (profile.loss_display if 'loss_display' in profile else 0.1))
         ))
         def display_loss(_engine: engine.Engine):
+            epoch_iteration = _engine.state.iteration % _engine.state.epoch_length
+            if epoch_iteration == 0:
+                epoch_iteration = _engine.state.epoch_length
             logger.info('TRAIN EPOCH {} ITERATION {} | output: {}'.format(
-                _engine.state.epoch, _engine.state.iteration, _engine.state.output
+                _engine.state.epoch, epoch_iteration, _engine.state.output
             ))
 
         @trainer.on(engine.Events.EPOCH_COMPLETED)
@@ -557,7 +561,7 @@ class TrainTask(Task):
 
             optimizer.step()
             if lr_scheduler is not None:
-                lr_scheduler.step()
+                lr_scheduler.step(loss)
 
             return output_transform(x, y, y_pred, loss)
 

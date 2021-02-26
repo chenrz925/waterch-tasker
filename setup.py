@@ -47,7 +47,7 @@ setup(
         ],
     },
     # could also include long_description, download_url, etc.
-    install_requires=open("requirements.txt").readlines(),
+    install_requires=[open("requirements.txt").readlines()],
     extras_require={
         "pytorch": [
             "torch>=1.7.1",
