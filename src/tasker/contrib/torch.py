@@ -687,8 +687,11 @@ class SimpleTrainTask(TrainTask):
         """
         if 'reference' in profile:
             clz = profile.reference
-            if not issubclass(clz, nn.Module):
-                logger.warning('Referenced class is not a subclass of torch.nn.Module.')
+            try:
+                if not issubclass(clz, nn.Module):
+                    logger.warning('Referenced class is not a subclass of torch.nn.Module.')
+            except TypeError:
+                logger.warning('Referenced object is not a class, maybe a function?')
         else:
             raise RuntimeError('Missing field "reference" in the model profile.')
 
@@ -716,8 +719,11 @@ class SimpleTrainTask(TrainTask):
         """
         if 'reference' in profile:
             clz = profile.reference
-            if not issubclass(clz, nn.Module):
-                logger.warning('Referenced class is not a subclass of torch.nn.Module.')
+            try:
+                if not issubclass(clz, nn.Module):
+                    logger.warning('Referenced class is not a subclass of torch.nn.Module.')
+            except TypeError:
+                logger.warning('Referenced object is not a class, maybe a function?')
         else:
             raise RuntimeError('Missing field "reference" in the loss_function profile.')
 
@@ -748,8 +754,11 @@ class SimpleTrainTask(TrainTask):
         """
         if 'reference' in profile:
             clz = profile.reference
-            if not issubclass(clz, optim.Optimizer):
-                logger.warning('Referenced class is not a subclass of torch.optim.Optimizer.')
+            try:
+                if not issubclass(clz, optim.Optimizer):
+                    logger.warning('Referenced class is not a subclass of torch.optim.Optimizer.')
+            except TypeError:
+                logger.warning('Referenced object is not a class, maybe a function?')
         else:
             raise RuntimeError('Missing field "reference" in the optimizer profile.')
 
