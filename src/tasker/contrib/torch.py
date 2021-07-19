@@ -688,7 +688,7 @@ class SimpleTrainTask(TrainTask):
         if 'reference' in profile:
             clz = profile.reference
             if not issubclass(clz, nn.Module):
-                raise RuntimeError('Referenced class is not a subclass of torch.nn.Module.')
+                logger.warning('Referenced class is not a subclass of torch.nn.Module.')
         else:
             raise RuntimeError('Missing field "reference" in the model profile.')
 
@@ -717,7 +717,7 @@ class SimpleTrainTask(TrainTask):
         if 'reference' in profile:
             clz = profile.reference
             if not issubclass(clz, nn.Module):
-                raise RuntimeError('Referenced class is not a subclass of torch.nn.Module.')
+                logger.warning('Referenced class is not a subclass of torch.nn.Module.')
         else:
             raise RuntimeError('Missing field "reference" in the loss_function profile.')
 
@@ -749,7 +749,7 @@ class SimpleTrainTask(TrainTask):
         if 'reference' in profile:
             clz = profile.reference
             if not issubclass(clz, optim.Optimizer):
-                raise RuntimeError('Referenced class is not a subclass of torch.optim.Optimizer.')
+                logger.warning('Referenced class is not a subclass of torch.optim.Optimizer.')
         else:
             raise RuntimeError('Missing field "reference" in the optimizer profile.')
 
@@ -812,17 +812,3 @@ class SimpleTrainTask(TrainTask):
             _metrics.update(profile.metrics)
 
         return _metrics
-
-
-class FBetaMacro(metrics.MetricsLambda):
-    """
-    <i>tasker.contrib.torch.FBetaMacro</i>
-
-    Metric of F-beta score.
-    See Also [Metrics](https://pytorch.org/ignite/metrics.html)
-    """
-    def __init__(self, beta: int):
-        def f_beta(p, r, beta):
-            return torch.mean((1 + beta ** 2) * p * r / (beta ** 2 * p + r + 1e-20)).item()
-
-        super(FBetaMacro, self).__init__(f_beta, metrics.Precision(), metrics.Recall(), beta)

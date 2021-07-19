@@ -79,3 +79,61 @@ class SetEnvironmentTask(Task):
             ```
         """
         return []
+
+
+class StorageKeyMoveTask(Task):
+    """
+    <i>tasker.tasks.utils.StorageKeyMoveTask</i>
+
+    Move a key to another key.
+    """
+    def __init__(self, key_from: Text, key_to: Text, *args):
+        self.KEY_FROM = key_from
+        self.KEY_TO = key_to
+
+    def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        shared[self.KEY_TO] = shared[self.KEY_FROM]
+        del shared[self.KEY_FROM]
+        return Return.SUCCESS
+
+    def require(self) -> List[Text]:
+        return [self.KEY_FROM, self.KEY_TO]
+
+    def provide(self) -> List[Text]:
+        return [self.KEY_FROM, self.KEY_TO]
+
+    def remove(self) -> List[Text]:
+        return [self.KEY_FROM]
+
+    @classmethod
+    def define(cls) -> List[Definition]:
+        return []
+
+
+class StorageKeyCopyTask(Task):
+    """
+    <i>tasker.tasks.utils.StorageKeyCopyTask</i>
+
+    Move a key to another key.
+    """
+    def __init__(self, key_from: Text, key_to: Text, *args):
+        self.KEY_FROM = key_from
+        self.KEY_TO = key_to
+
+    def invoke(self, profile: Profile, shared: Storage, logger: Logger) -> int:
+        shared[self.KEY_TO] = shared[self.KEY_FROM]
+        return Return.SUCCESS
+
+    def require(self) -> List[Text]:
+        return [self.KEY_FROM, self.KEY_TO]
+
+    def provide(self) -> List[Text]:
+        return [self.KEY_FROM, self.KEY_TO]
+
+    def remove(self) -> List[Text]:
+        return [self.KEY_FROM]
+
+    @classmethod
+    def define(cls) -> List[Definition]:
+        return []
+

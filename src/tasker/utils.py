@@ -6,6 +6,11 @@ from typing import Text, Type, List, Callable
 
 from box import BoxError
 
+try:
+    import optuna as opt
+except ModuleNotFoundError:
+    opt = None
+
 from .typedef import Profile
 
 
